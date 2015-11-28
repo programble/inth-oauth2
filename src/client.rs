@@ -17,6 +17,32 @@ pub struct Client {
     redirect_uri: Option<String>,
 }
 
+macro_rules! site_constructors {
+    (
+        $(
+            #[$attr:meta]
+            $ident:ident => ($auth_uri:expr, $token_uri:expr)
+        ),*
+    ) => {
+        $(
+            #[$attr]
+            pub fn $ident<S: Into<String>>(
+                client_id: S,
+                client_secret: S,
+                redirect_uri: Option<S>
+            ) -> Self {
+                Client {
+                    auth_uri: String::from($auth_uri),
+                    token_uri: String::from($token_uri),
+                    client_id: client_id.into(),
+                    client_secret: client_secret.into(),
+                    redirect_uri: redirect_uri.map(Into::into),
+                }
+            }
+        )*
+    }
+}
+
 impl Client {
     /// Creates an OAuth 2.0 client.
     pub fn new<S: Into<String>>(
@@ -32,40 +58,22 @@ impl Client {
 
             client_id: client_id.into(),
             client_secret: client_secret.into(),
-            redirect_uri: redirect_uri.map(Into::<String>::into),
+            redirect_uri: redirect_uri.map(Into::into),
         }
     }
 
-    /// Creates a Google OAuth 2.0 client.
-    pub fn google<S: Into<String>>(
-        client_id: S,
-        client_secret: S,
-        redirect_uri: Option<S>
-    ) -> Self {
-        Client {
-            auth_uri: String::from("https://accounts.google.com/o/oauth2/auth"),
-            token_uri: String::from("https://accounts.google.com/o/oauth2/token"),
+    site_constructors!{
+        #[doc = "Creates a Google OAuth 2.0 client."]
+        google => (
+            "https://accounts.google.com/o/oauth2/auth",
+            "https://accounts.google.com/o/oauth2/token"
+        ),
 
-            client_id: client_id.into(),
-            client_secret: client_secret.into(),
-            redirect_uri: redirect_uri.map(Into::<String>::into),
-        }
-    }
-
-    /// Creates a GitHub OAuth 2.0 client.
-    pub fn github<S: Into<String>>(
-        client_id: S,
-        client_secret: S,
-        redirect_uri: Option<S>
-    ) -> Self {
-        Client {
-            auth_uri: String::from("https://github.com/login/oauth/authorize"),
-            token_uri: String::from("https://github.com/login/oauth/access_token"),
-
-            client_id: client_id.into(),
-            client_secret: client_secret.into(),
-            redirect_uri: redirect_uri.map(Into::<String>::into),
-        }
+        #[doc = "Creates a GitHub OAuth 2.0 client."]
+        github => (
+            "https://github.com/login/oauth/authorize",
+            "https://github.com/login/oauth/access_token"
+        )
     }
 
     /// Constructs an authorization request URI.
