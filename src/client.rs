@@ -1,4 +1,6 @@
-use url::{Url, ParseResult};
+use url::{Url, form_urlencoded};
+
+use super::Result;
 
 /// OAuth 2.0 client.
 pub struct Client {
@@ -62,7 +64,7 @@ impl Client {
     }
 
     /// Constructs an authorization request URI.
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> ParseResult<String> {
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String> {
         let mut uri = try!(Url::parse(&self.auth_uri));
 
         let mut query_pairs = vec![
