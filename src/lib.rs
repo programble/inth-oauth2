@@ -4,10 +4,10 @@ extern crate rustc_serialize;
 extern crate url;
 
 pub use client::Client;
-mod client;
+pub mod client;
 
 pub use token::Token;
-mod token;
+pub mod token;
 
 pub use error::{Error, Result};
-mod error;
+pub mod error;

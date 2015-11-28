@@ -4,6 +4,46 @@ use hyper;
 use rustc_serialize::json;
 use url;
 
+/// OAuth 2.0 error codes.
+#[derive(Debug)]
+pub enum OAuth2ErrorCode {
+    InvalidRequest,
+    InvalidClient,
+    InvalidGrant,
+    UnauthorizedClient,
+    UnsupportedGrantType,
+    InvalidScope,
+}
+
+/// OAuth 2.0 error.
+///
+/// See [RFC6749](http://tools.ietf.org/html/rfc6749#section-5.2).
+#[derive(Debug)]
+pub struct OAuth2Error {
+    pub code: OAuth2ErrorCode,
+    pub description: Option<String>,
+    pub uri: Option<String>,
+}
+
+impl fmt::Display for OAuth2Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        try!(write!(f, "{:?}", self.code));
+        if let Some(ref description) = self.description {
+            try!(write!(f, ": {}", description));
+        }
+        if let Some(ref uri) = self.uri {
+            try!(write!(f, " ({})", uri));
+        }
+        Ok(())
+    }
+}
+
+impl error::Error for OAuth2Error {
+    fn description(&self) -> &str {
+        "OAuth2 API error"
+    }
+}
+
 /// Errors that can occur during authentication flow.
 #[derive(Debug)]
 pub enum Error {
@@ -11,6 +51,7 @@ pub enum Error {
     Url(url::ParseError),
     Hyper(hyper::Error),
     Json(json::DecoderError),
+    OAuth2(OAuth2Error),
     Todo,
 }
 
@@ -24,6 +65,7 @@ impl fmt::Display for Error {
             Error::Url(ref err) => write!(f, "{}", err),
             Error::Hyper(ref err) => write!(f, "{}", err),
             Error::Json(ref err) => write!(f, "{}", err),
+            Error::OAuth2(ref err) => write!(f, "{}", err),
             Error::Todo => write!(f, "Not implemented!"),
         }
     }
@@ -36,6 +78,7 @@ impl error::Error for Error {
             Error::Url(_) => "OAuth2 URL error",
             Error::Hyper(_) => "OAuth2 Hyper error",
             Error::Json(_) => "OAuth2 JSON error",
+            Error::OAuth2(_) => "OAuth2 API error",
             Error::Todo => "OAuth2 not implemented error",
         }
     }
@@ -46,6 +89,7 @@ impl error::Error for Error {
             Error::Url(ref err) => Some(err),
             Error::Hyper(ref err) => Some(err),
             Error::Json(ref err) => Some(err),
+            Error::OAuth2(ref err) => Some(err),
             _ => None,
         }
     }
@@ -65,3 +109,4 @@ impl_from!(Error::Io, io::Error);
 impl_from!(Error::Url, url::ParseError);
 impl_from!(Error::Hyper, hyper::Error);
 impl_from!(Error::Json, json::DecoderError);
+impl_from!(Error::OAuth2, OAuth2Error);
