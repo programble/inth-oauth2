@@ -1,8 +1,8 @@
-//! OAuth2 client.
+//! OAuth 2.0 client.
 
 use url::{Url, ParseResult};
 
-/// OAuth2 client.
+/// OAuth 2.0 client.
 pub struct Client {
     auth_uri: String,
     token_uri: String,
@@ -13,6 +13,7 @@ pub struct Client {
 }
 
 impl Client {
+    /// Creates an OAuth 2.0 client.
     pub fn new<S: Into<String>>(
         auth_uri: S,
         token_uri: S,
@@ -30,6 +31,7 @@ impl Client {
         }
     }
 
+    /// Creates a Google OAuth 2.0 client.
     pub fn google<S: Into<String>>(
         client_id: S,
         client_secret: S,
@@ -45,6 +47,7 @@ impl Client {
         }
     }
 
+    /// Constructs an authorization request URI.
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> ParseResult<String> {
         let mut uri = try!(Url::parse(&self.auth_uri));
 
