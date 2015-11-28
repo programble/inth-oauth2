@@ -5,7 +5,8 @@ use hyper::{self, header, mime};
 use rustc_serialize::json;
 use url::{Url, form_urlencoded};
 
-use super::{Error, Result, Token};
+use super::Token;
+use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 
 /// OAuth 2.0 client.
 pub struct Client {
@@ -36,6 +37,32 @@ impl Into<Token> for TokenResponse {
             expires: self.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
             refresh_token: self.refresh_token,
             scope: self.scope,
+        }
+    }
+}
+
+#[derive(RustcDecodable)]
+struct ErrorResponse {
+    error: String,
+    error_description: Option<String>,
+    error_uri: Option<String>,
+}
+
+impl Into<OAuth2Error> for ErrorResponse {
+    fn into(self) -> OAuth2Error {
+        let code = match &self.error[..] {
+            "invalid_request" => OAuth2ErrorCode::InvalidRequest,
+            "invalid_client" => OAuth2ErrorCode::InvalidClient,
+            "invalid_grant" => OAuth2ErrorCode::InvalidGrant,
+            "unauthorized_client" => OAuth2ErrorCode::UnauthorizedClient,
+            "unsupported_grant_type" => OAuth2ErrorCode::UnsupportedGrantType,
+            "invalid_scope" => OAuth2ErrorCode::InvalidScope,
+            _ => OAuth2ErrorCode::Unrecognized(self.error),
+        };
+        OAuth2Error {
+            code: code,
+            description: self.error_description,
+            uri: self.error_uri,
         }
     }
 }
@@ -161,14 +188,15 @@ impl Client {
             .body(&body_str);
 
         let mut response = try!(request.send());
-        let mut json = String::new();
-        try!(response.read_to_string(&mut json));
+        let mut body = String::new();
+        try!(response.read_to_string(&mut body));
 
-        if response.status != hyper::Ok {
-            return Err(Error::Todo);
+        let token = json::decode::<TokenResponse>(&body);
+        if let Ok(token) = token {
+            return Ok(token.into());
         }
 
-        let token: TokenResponse = try!(json::decode(&json));
-        Ok(token.into())
+        let error: ErrorResponse = try!(json::decode(&body));
+        Err(Error::OAuth2(error.into()))
     }
 }

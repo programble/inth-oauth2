@@ -13,6 +13,7 @@ pub enum OAuth2ErrorCode {
     UnauthorizedClient,
     UnsupportedGrantType,
     InvalidScope,
+    Unrecognized(String),
 }
 
 /// OAuth 2.0 error.
@@ -52,7 +53,6 @@ pub enum Error {
     Hyper(hyper::Error),
     Json(json::DecoderError),
     OAuth2(OAuth2Error),
-    Todo,
 }
 
 /// Result type returned from authentication flow methods.
@@ -66,7 +66,6 @@ impl fmt::Display for Error {
             Error::Hyper(ref err) => write!(f, "{}", err),
             Error::Json(ref err) => write!(f, "{}", err),
             Error::OAuth2(ref err) => write!(f, "{}", err),
-            Error::Todo => write!(f, "Not implemented!"),
         }
     }
 }
@@ -79,7 +78,6 @@ impl error::Error for Error {
             Error::Hyper(_) => "OAuth2 Hyper error",
             Error::Json(_) => "OAuth2 JSON error",
             Error::OAuth2(_) => "OAuth2 API error",
-            Error::Todo => "OAuth2 not implemented error",
         }
     }
 
@@ -90,7 +88,6 @@ impl error::Error for Error {
             Error::Hyper(ref err) => Some(err),
             Error::Json(ref err) => Some(err),
             Error::OAuth2(ref err) => Some(err),
-            _ => None,
         }
     }
 }
