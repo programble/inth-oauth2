@@ -21,5 +21,7 @@ fn main() {
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    client.request_access_token(hyper::Client::new(), &code).unwrap();
+    let token = client.request_token(hyper::Client::new(), code.trim()).unwrap();
+
+    println!("{:?}", token);
 }

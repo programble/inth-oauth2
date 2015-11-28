@@ -1,5 +1,7 @@
+extern crate hyper;
 extern crate inth_oauth2;
 
+use std::io;
 use inth_oauth2::Client;
 
 fn main() {
@@ -12,4 +14,11 @@ fn main() {
     let auth_uri = client.auth_uri(Some("user"), None).unwrap();
 
     println!("{}", auth_uri);
+
+    let mut code = String::new();
+    io::stdin().read_line(&mut code).unwrap();
+
+    let token = client.request_token(hyper::Client::new(), code.trim()).unwrap();
+
+    println!("{:?}", token);
 }
