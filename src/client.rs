@@ -152,16 +152,17 @@ impl Client {
         Ok(uri.serialize())
     }
 
-    /// Requests an access token using an authorization code.
-    pub fn request_token(&self, code: &str) -> Result<Token> {
-        let auth_header = header::Authorization(
+    fn auth_header(&self) -> header::Authorization<header::Basic> {
+        header::Authorization(
             header::Basic {
                 username: self.client_id.clone(),
                 password: Some(self.client_secret.clone()),
             }
-        );
+        )
+    }
 
-        let accept_header = header::Accept(vec![
+    fn accept_header(&self) -> header::Accept {
+        header::Accept(vec![
             header::qitem(
                 mime::Mime(
                     mime::TopLevel::Application,
@@ -169,8 +170,11 @@ impl Client {
                     vec![]
                 )
             ),
-        ]);
+        ])
+    }
 
+    /// Requests an access token using an authorization code.
+    pub fn request_token(&self, code: &str) -> Result<Token> {
         let mut body_pairs = vec![
             ("grant_type", "authorization_code"),
             ("code", code),
@@ -182,8 +186,8 @@ impl Client {
         let body_str = form_urlencoded::serialize(body_pairs);
 
         let request = self.http_client.post(&self.token_uri)
-            .header(auth_header)
-            .header(accept_header)
+            .header(self.auth_header())
+            .header(self.accept_header())
             .header(header::ContentType::form_url_encoded())
             .body(&body_str);
 
