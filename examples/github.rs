@@ -1,4 +1,3 @@
-extern crate hyper;
 extern crate inth_oauth2;
 
 use std::io;
@@ -6,6 +5,7 @@ use inth_oauth2::Client;
 
 fn main() {
     let client = Client::github(
+        Default::default(),
         "01774654cd9a6051e478",
         "9f14d16d95d605e715ec1a9aecec220d2565fd5c",
         Some("https://cmcenroe.me/oauth2-paste")
@@ -18,7 +18,7 @@ fn main() {
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    let token = client.request_token(hyper::Client::new(), code.trim()).unwrap();
+    let token = client.request_token(code.trim()).unwrap();
 
     println!("{:?}", token);
 }

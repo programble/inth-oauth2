@@ -1,4 +1,3 @@
-extern crate hyper;
 extern crate inth_oauth2;
 
 use std::io;
@@ -6,6 +5,7 @@ use inth_oauth2::Client;
 
 fn main() {
     let client = Client::google(
+        Default::default(),
         "143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com",
         "3kZ5WomzHFlN2f_XbhkyPd3o",
         Some("urn:ietf:wg:oauth:2.0:oob")
@@ -21,7 +21,7 @@ fn main() {
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    let token = client.request_token(hyper::Client::new(), code.trim()).unwrap();
+    let token = client.request_token(code.trim()).unwrap();
 
     println!("{:?}", token);
 }

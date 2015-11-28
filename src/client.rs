@@ -9,6 +9,8 @@ use super::{Error, Result, Token};
 
 /// OAuth 2.0 client.
 pub struct Client {
+    http_client: hyper::Client,
+
     auth_uri: String,
     token_uri: String,
 
@@ -27,11 +29,13 @@ macro_rules! site_constructors {
         $(
             #[$attr]
             pub fn $ident<S: Into<String>>(
+                http_client: hyper::Client,
                 client_id: S,
                 client_secret: S,
                 redirect_uri: Option<S>
             ) -> Self {
                 Client {
+                    http_client: http_client,
                     auth_uri: String::from($auth_uri),
                     token_uri: String::from($token_uri),
                     client_id: client_id.into(),
@@ -46,6 +50,7 @@ macro_rules! site_constructors {
 impl Client {
     /// Creates an OAuth 2.0 client.
     pub fn new<S: Into<String>>(
+        http_client: hyper::Client,
         auth_uri: S,
         token_uri: S,
         client_id: S,
@@ -53,9 +58,9 @@ impl Client {
         redirect_uri: Option<S>
     ) -> Self {
         Client {
+            http_client: http_client,
             auth_uri: auth_uri.into(),
             token_uri: token_uri.into(),
-
             client_id: client_id.into(),
             client_secret: client_secret.into(),
             redirect_uri: redirect_uri.map(Into::into),
@@ -100,7 +105,7 @@ impl Client {
     }
 
     /// Requests an access token using an authorization code.
-    pub fn request_token(&self, client: hyper::Client, code: &str) -> Result<Token> {
+    pub fn request_token(&self, code: &str) -> Result<Token> {
         let auth_header = header::Authorization(
             header::Basic {
                 username: self.client_id.clone(),
@@ -128,7 +133,7 @@ impl Client {
 
         let body_str = form_urlencoded::serialize(body_pairs);
 
-        let request = client.post(&self.token_uri)
+        let request = self.http_client.post(&self.token_uri)
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
