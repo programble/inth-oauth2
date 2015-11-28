@@ -1,6 +1,7 @@
 use chrono::{DateTime, UTC};
 
 /// OAuth 2.0 access token.
+#[derive(Debug)]
 pub struct Token {
     pub access_token: String,
     pub token_type: String,
