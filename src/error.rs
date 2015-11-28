@@ -1,7 +1,8 @@
 use std::{error, fmt, io, result};
 
-use url;
 use hyper;
+use rustc_serialize::json;
+use url;
 
 /// Errors that can occur during authentication flow.
 #[derive(Debug)]
@@ -9,6 +10,7 @@ pub enum Error {
     Io(io::Error),
     Url(url::ParseError),
     Hyper(hyper::Error),
+    Json(json::DecoderError),
     Todo,
 }
 
@@ -21,6 +23,7 @@ impl fmt::Display for Error {
             Error::Io(ref err) => write!(f, "{}", err),
             Error::Url(ref err) => write!(f, "{}", err),
             Error::Hyper(ref err) => write!(f, "{}", err),
+            Error::Json(ref err) => write!(f, "{}", err),
             Error::Todo => write!(f, "Not implemented!"),
         }
     }
@@ -32,6 +35,7 @@ impl error::Error for Error {
             Error::Io(_) => "OAuth2 IO error",
             Error::Url(_) => "OAuth2 URL error",
             Error::Hyper(_) => "OAuth2 Hyper error",
+            Error::Json(_) => "OAuth2 JSON error",
             Error::Todo => "OAuth2 not implemented error",
         }
     }
@@ -41,6 +45,7 @@ impl error::Error for Error {
             Error::Io(ref err) => Some(err),
             Error::Url(ref err) => Some(err),
             Error::Hyper(ref err) => Some(err),
+            Error::Json(ref err) => Some(err),
             _ => None,
         }
     }
@@ -59,3 +64,4 @@ macro_rules! impl_from {
 impl_from!(Error::Io, io::Error);
 impl_from!(Error::Url, url::ParseError);
 impl_from!(Error::Hyper, hyper::Error);
+impl_from!(Error::Json, json::DecoderError);
