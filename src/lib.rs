@@ -47,6 +47,22 @@ impl Client {
         }
     }
 
+    /// Creates a GitHub OAuth 2.0 client.
+    pub fn github<S: Into<String>>(
+        client_id: S,
+        client_secret: S,
+        redirect_uri: Option<S>
+    ) -> Self {
+        Client {
+            auth_uri: String::from("https://github.com/login/oauth/authorize"),
+            token_uri: String::from("https://github.com/login/oauth/access_token"),
+
+            client_id: client_id.into(),
+            client_secret: client_secret.into(),
+            redirect_uri: redirect_uri.map(Into::<String>::into),
+        }
+    }
+
     /// Constructs an authorization request URI.
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> ParseResult<String> {
         let mut uri = try!(Url::parse(&self.auth_uri));
