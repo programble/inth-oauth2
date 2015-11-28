@@ -7,3 +7,6 @@ mod client;
 
 pub use token::Token;
 mod token;
+
+pub use error::{Error, Result};
+mod error;
