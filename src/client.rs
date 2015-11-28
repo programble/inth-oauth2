@@ -19,6 +19,27 @@ pub struct Client {
     redirect_uri: Option<String>,
 }
 
+#[derive(RustcDecodable)]
+struct TokenResponse {
+    access_token: String,
+    token_type: String,
+    expires_in: Option<i64>,
+    refresh_token: Option<String>,
+    scope: Option<String>,
+}
+
+impl Into<Token> for TokenResponse {
+    fn into(self) -> Token {
+        Token {
+            access_token: self.access_token,
+            token_type: self.token_type,
+            expires: self.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
+            refresh_token: self.refresh_token,
+            scope: self.scope,
+        }
+    }
+}
+
 macro_rules! site_constructors {
     (
         $(
@@ -147,22 +168,7 @@ impl Client {
             return Err(Error::Todo);
         }
 
-        #[derive(RustcDecodable)]
-        struct TokenResponse {
-            access_token: String,
-            token_type: String,
-            expires_in: Option<i64>,
-            refresh_token: Option<String>,
-            scope: Option<String>,
-        }
         let token: TokenResponse = try!(json::decode(&json));
-
-        Ok(Token {
-            access_token: token.access_token,
-            token_type: token.token_type,
-            expires: token.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
-            refresh_token: token.refresh_token,
-            scope: token.scope,
-        })
+        Ok(token.into())
     }
 }
