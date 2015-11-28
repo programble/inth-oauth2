@@ -24,4 +24,8 @@ fn main() {
     let token = client.request_token(code.trim()).unwrap();
 
     println!("{:?}", token);
+
+    let refreshed = client.refresh_token(&token, None).unwrap();
+
+    println!("{:?}", refreshed);
 }

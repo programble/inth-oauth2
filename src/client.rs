@@ -173,23 +173,13 @@ impl Client {
         ])
     }
 
-    /// Requests an access token using an authorization code.
-    pub fn request_token(&self, code: &str) -> Result<Token> {
-        let mut body_pairs = vec![
-            ("grant_type", "authorization_code"),
-            ("code", code),
-        ];
-        if let Some(ref redirect_uri) = self.redirect_uri {
-            body_pairs.push(("redirect_uri", redirect_uri));
-        }
-
-        let body_str = form_urlencoded::serialize(body_pairs);
-
+    fn token_post(&self, body_pairs: Vec<(&str, &str)>) -> Result<Token> {
+        let post_body = form_urlencoded::serialize(body_pairs);
         let request = self.http_client.post(&self.token_uri)
             .header(self.auth_header())
             .header(self.accept_header())
             .header(header::ContentType::form_url_encoded())
-            .body(&body_str);
+            .body(&post_body);
 
         let mut response = try!(request.send());
         let mut body = String::new();
@@ -202,5 +192,44 @@ impl Client {
 
         let error: ErrorResponse = try!(json::decode(&body));
         Err(Error::OAuth2(error.into()))
+    }
+
+    /// Requests an access token using an authorization code.
+    pub fn request_token(&self, code: &str) -> Result<Token> {
+        let mut body_pairs = vec![
+            ("grant_type", "authorization_code"),
+            ("code", code),
+        ];
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            body_pairs.push(("redirect_uri", redirect_uri));
+        }
+        self.token_post(body_pairs)
+    }
+
+    /// Refreshes an access token.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `token` does not contain a `refresh_token`.
+    pub fn refresh_token(&self, token: &Token, scope: Option<&str>) -> Result<Token> {
+        let refresh_token = token.refresh_token.as_ref().unwrap();
+
+        let mut body_pairs = vec![
+            ("grant_type", "refresh_token"),
+            ("refresh_token", refresh_token),
+        ];
+        if let Some(scope) = scope {
+            body_pairs.push(("scope", scope));
+        }
+
+        let mut result = self.token_post(body_pairs);
+
+        if let Ok(ref mut token) = result {
+            if token.refresh_token.is_none() {
+                token.refresh_token = Some(refresh_token.clone());
+            }
+        }
+
+        result
     }
 }
