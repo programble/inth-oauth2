@@ -1,4 +1,4 @@
 [package]
-name = "broauth2"
+name = "inth-oauth2"
 version = "0.1.0"
 authors = ["Curtis McEnroe <programble@gmail.com>"]
