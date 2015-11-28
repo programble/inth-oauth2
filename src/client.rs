@@ -1,6 +1,11 @@
+use std::io::Read;
+
+use chrono::{UTC, Duration};
+use hyper::{self, header, mime};
+use rustc_serialize::json;
 use url::{Url, form_urlencoded};
 
-use super::Result;
+use super::{Error, Result, Token};
 
 /// OAuth 2.0 client.
 pub struct Client {
@@ -84,5 +89,67 @@ impl Client {
         uri.set_query_from_pairs(query_pairs.iter());
 
         Ok(uri.serialize())
+    }
+
+    /// Requests an access token using an authorization code.
+    pub fn request_token(&self, client: hyper::Client, code: &str) -> Result<Token> {
+        let auth_header = header::Authorization(
+            header::Basic {
+                username: self.client_id.clone(),
+                password: Some(self.client_secret.clone()),
+            }
+        );
+
+        let accept_header = header::Accept(vec![
+            header::qitem(
+                mime::Mime(
+                    mime::TopLevel::Application,
+                    mime::SubLevel::Json,
+                    vec![]
+                )
+            ),
+        ]);
+
+        let mut body_pairs = vec![
+            ("grant_type", "authorization_code"),
+            ("code", code),
+        ];
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            body_pairs.push(("redirect_uri", redirect_uri));
+        }
+
+        let body_str = form_urlencoded::serialize(body_pairs);
+
+        let request = client.post(&self.token_uri)
+            .header(auth_header)
+            .header(accept_header)
+            .header(header::ContentType::form_url_encoded())
+            .body(&body_str);
+
+        let mut response = try!(request.send());
+        let mut json = String::new();
+        try!(response.read_to_string(&mut json));
+
+        if response.status != hyper::Ok {
+            return Err(Error::Todo);
+        }
+
+        #[derive(RustcDecodable)]
+        struct TokenResponse {
+            access_token: String,
+            token_type: String,
+            expires_in: Option<i64>,
+            refresh_token: Option<String>,
+            scope: Option<String>,
+        }
+        let token: TokenResponse = try!(json::decode(&json));
+
+        Ok(Token {
+            access_token: token.access_token,
+            token_type: token.token_type,
+            expires: token.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
+            refresh_token: token.refresh_token,
+            scope: token.scope,
+        })
     }
 }
