@@ -86,6 +86,33 @@
 //!     token = auth.refresh_token(&token, None).unwrap();
 //! }
 //! ```
+//!
+//! ## Persisting tokens
+//!
+//! `Token` implements `Encodable` and `Decodable` from `rustc_serialize`, so can be persisted in
+//! JSON.
+//!
+//! ```
+//! # extern crate inth_oauth2;
+//! # extern crate rustc_serialize;
+//! # extern crate chrono;
+//! use inth_oauth2::Token;
+//! use rustc_serialize::json;
+//! # use chrono::{UTC, Timelike};
+//! # fn main() {
+//! # let token = Token {
+//! #     access_token: String::from("AAAAAAAA"),
+//! #     token_type: String::from("bearer"),
+//! #     expires: Some(UTC::now().with_nanosecond(0).unwrap()),
+//! #     refresh_token: Some(String::from("BBBBBBB")),
+//! #     scope: None,
+//! # };
+//!
+//! let json = json::encode(&token).unwrap();
+//! let decoded: Token = json::decode(&json).unwrap();
+//! assert_eq!(token, decoded);
+//! # }
+//! ```
 
 extern crate chrono;
 extern crate hyper;
