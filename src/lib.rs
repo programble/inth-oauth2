@@ -2,12 +2,12 @@
 //!
 //! OAuth2 really isn't that hard, you know?
 //!
+//! Implementation of [RFC6749](http://tools.ietf.org/html/rfc6749).
+//!
 //! `inth_oauth2` is on [Crates.io][crate] and [GitHub][github].
 //!
 //! [crate]: https://crates.io/crates/inth-oauth2
 //! [github]: https://github.com/programble/inth-oauth2
-//!
-//! Implementation of [RFC6749](http://tools.ietf.org/html/rfc6749).
 //!
 //! ## Providers
 //!
