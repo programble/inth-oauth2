@@ -4,7 +4,7 @@ use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 /// OAuth 2.0 access token.
 ///
 /// See [RFC6749 section 5](http://tools.ietf.org/html/rfc6749#section-5).
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Token {
     /// The access token issued by the authorization server.
     pub access_token: String,
