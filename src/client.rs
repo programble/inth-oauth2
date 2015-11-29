@@ -9,6 +9,10 @@ use super::Token;
 use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 
 /// OAuth 2.0 client.
+///
+/// Performs HTTP requests using the provided `hyper::Client`.
+///
+/// See [RFC6749 section 4.1](http://tools.ietf.org/html/rfc6749#section-4.1).
 pub struct Client {
     http_client: hyper::Client,
 
@@ -116,13 +120,13 @@ impl Client {
     }
 
     site_constructors!{
-        #[doc = "Creates a Google OAuth 2.0 client."]
+        #[doc = "Creates a Google OAuth 2.0 client.\n\nSee [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/OAuth2)."]
         google => (
             "https://accounts.google.com/o/oauth2/auth",
             "https://accounts.google.com/o/oauth2/token"
         ),
 
-        #[doc = "Creates a GitHub OAuth 2.0 client."]
+        #[doc = "Creates a GitHub OAuth 2.0 client.\n\nSee [OAuth, GitHub API](https://developer.github.com/v3/oauth/)."]
         github => (
             "https://github.com/login/oauth/authorize",
             "https://github.com/login/oauth/access_token"
@@ -130,6 +134,8 @@ impl Client {
     }
 
     /// Constructs an authorization request URI.
+    ///
+    /// See [RFC6749 section 4.1.1](http://tools.ietf.org/html/rfc6749#section-4.1.1).
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String> {
         let mut uri = try!(Url::parse(&self.auth_uri));
 
@@ -195,6 +201,8 @@ impl Client {
     }
 
     /// Requests an access token using an authorization code.
+    ///
+    /// See [RFC6749 section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
     pub fn request_token(&self, code: &str) -> Result<Token> {
         let mut body_pairs = vec![
             ("grant_type", "authorization_code"),
@@ -207,6 +215,8 @@ impl Client {
     }
 
     /// Refreshes an access token.
+    ///
+    /// See [RFC6749 section 6](http://tools.ietf.org/html/rfc6749#section-6).
     ///
     /// # Panics
     ///

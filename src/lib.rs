@@ -7,6 +7,8 @@
 //! [crate]: https://crates.io/crates/inth-oauth2
 //! [github]: https://github.com/programble/inth-oauth2
 //!
+//! Implementation of [RFC6749](http://tools.ietf.org/html/rfc6749).
+//!
 //! ## Providers
 //!
 //! `inth_oauth2` can be used with any OAuth 2.0 provider, but provides defaults for a few common
@@ -30,12 +32,7 @@
 //! ```
 //! use inth_oauth2::Client as OAuth2;
 //!
-//! let auth = OAuth2::github(
-//!     Default::default(),
-//!     "CLIENT_ID",
-//!     "CLIENT_SECRET",
-//!     None
-//! );
+//! let auth = OAuth2::github(Default::default(), "CLIENT_ID", "CLIENT_SECRET", None);
 //! ```
 //!
 //! ### Other
