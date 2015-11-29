@@ -7,7 +7,7 @@ use url;
 /// OAuth 2.0 error codes.
 ///
 /// See [RFC6749 section 5.2](http://tools.ietf.org/html/rfc6749#section-5.2).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum OAuth2ErrorCode {
     /// The request is missing a required parameter, includes an unsupported parameter value (other
     /// than grant type), repeats a parameter, includes multiple credentials, utilizes more than
@@ -40,7 +40,7 @@ pub enum OAuth2ErrorCode {
 /// OAuth 2.0 error.
 ///
 /// See [RFC6749 section 5.2](http://tools.ietf.org/html/rfc6749#section-5.2).
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct OAuth2Error {
     /// Error code.
     pub code: OAuth2ErrorCode,
