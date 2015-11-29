@@ -1,5 +1,13 @@
 # "It's not that hard" OAuth2 Client
 
+[![Crate Version][crate-badge]][crate]
+[![Build Status][travis-badge]][travis]
+
+[crate-badge]: https://img.shields.io/crates/v/inth-oauth2.svg
+[crate]: https://crates.io/crates/inth-oauth2
+[travis-badge]: https://img.shields.io/travis/programble/inth-oauth2.svg
+[travis]: https://travis-ci.org/programble/inth-oauth2
+
 OAuth2 really isn't that hard, you know?
 
 ## [Documentation][docs]
