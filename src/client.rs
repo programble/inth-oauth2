@@ -76,12 +76,12 @@ macro_rules! site_constructors {
     ) => {
         $(
             #[$attr]
-            pub fn $ident<S: Into<String>>(
+            pub fn $ident<S>(
                 http_client: hyper::Client,
                 client_id: S,
                 client_secret: S,
                 redirect_uri: Option<S>
-            ) -> Self {
+            ) -> Self where S: Into<String> {
                 Client {
                     http_client: http_client,
                     auth_uri: String::from($auth_uri),
@@ -97,14 +97,14 @@ macro_rules! site_constructors {
 
 impl Client {
     /// Creates an OAuth 2.0 client.
-    pub fn new<S: Into<String>>(
+    pub fn new<S>(
         http_client: hyper::Client,
         auth_uri: S,
         token_uri: S,
         client_id: S,
         client_secret: S,
         redirect_uri: Option<S>
-    ) -> Self {
+    ) -> Self where S: Into<String> {
         Client {
             http_client: http_client,
             auth_uri: auth_uri.into(),
