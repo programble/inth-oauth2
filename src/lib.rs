@@ -89,6 +89,26 @@
 //! }
 //! ```
 //!
+//! ## Using bearer access tokens
+//!
+//! If the obtained token is of the `Bearer` type, a Hyper `Authorization` header can be created
+//! from it.
+//!
+//! ```no_run
+//! # extern crate hyper;
+//! # extern crate inth_oauth2;
+//! # fn main() {
+//! # use inth_oauth2::Client as OAuth2;
+//! # let auth = OAuth2::google(Default::default(), "", "", None);
+//! # let token_pair = auth.request_token("").unwrap();
+//! let client = hyper::Client::new();
+//! let res = client.get("https://example.com/resource")
+//!     .header(token_pair.to_bearer_header().unwrap())
+//!     .send()
+//!     .unwrap();
+//! # }
+//! ```
+//!
 //! ## Persisting tokens
 //!
 //! `TokenPair` implements `Encodable` and `Decodable` from `rustc_serialize`, so can be persisted

@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
 use chrono::{DateTime, UTC, TimeZone};
+use hyper::header;
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 /// OAuth 2.0 access token and refresh token pair.
@@ -57,6 +58,17 @@ impl AccessToken {
     /// Returns true if token is expired.
     pub fn expired(&self) -> bool {
         self.expires.map_or(false, |dt| dt < UTC::now())
+    }
+
+    /// Creates an Authorization header.
+    ///
+    /// Returns `None` if `token_type` is not `Bearer`.
+    pub fn to_bearer_header(&self) -> Option<header::Authorization<header::Bearer>> {
+        if self.token_type == AccessTokenType::Bearer {
+            Some(header::Authorization(header::Bearer { token: self.token.clone() }))
+        } else {
+            None
+        }
     }
 }
 
