@@ -51,7 +51,7 @@ impl AccessToken {
 impl Deref for TokenPair {
     type Target = AccessToken;
 
-    fn deref<'a>(&'a self) -> &'a AccessToken {
+    fn deref(&self) -> &AccessToken {
         &self.access
     }
 }
