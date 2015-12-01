@@ -18,7 +18,7 @@ fn main() {
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    let token = client.request_token(code.trim()).unwrap();
+    let token_pair = client.request_token(code.trim()).unwrap();
 
-    println!("{:?}", token);
+    println!("{:?}", token_pair);
 }

@@ -5,7 +5,7 @@ use hyper::{self, header, mime};
 use rustc_serialize::json;
 use url::{Url, form_urlencoded};
 
-use super::Token;
+use super::{TokenPair, AccessToken, RefreshToken};
 use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 
 /// OAuth 2.0 client.
@@ -33,14 +33,16 @@ struct TokenResponse {
     scope: Option<String>,
 }
 
-impl Into<Token> for TokenResponse {
-    fn into(self) -> Token {
-        Token {
-            access_token: self.access_token,
-            token_type: self.token_type,
-            expires: self.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
-            refresh_token: self.refresh_token,
-            scope: self.scope,
+impl Into<TokenPair> for TokenResponse {
+    fn into(self) -> TokenPair {
+        TokenPair {
+            access: AccessToken {
+                token: self.access_token,
+                token_type: self.token_type,
+                expires: self.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
+                scope: self.scope,
+            },
+            refresh: self.refresh_token.map(|t| RefreshToken { token: t }),
         }
     }
 }
@@ -179,7 +181,7 @@ impl Client {
         ])
     }
 
-    fn token_post(&self, body_pairs: Vec<(&str, &str)>) -> Result<Token> {
+    fn token_post(&self, body_pairs: Vec<(&str, &str)>) -> Result<TokenPair> {
         let post_body = form_urlencoded::serialize(body_pairs);
         let request = self.http_client.post(&self.token_uri)
             .header(self.auth_header())
@@ -203,7 +205,7 @@ impl Client {
     /// Requests an access token using an authorization code.
     ///
     /// See [RFC6749 section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
-    pub fn request_token(&self, code: &str) -> Result<Token> {
+    pub fn request_token(&self, code: &str) -> Result<TokenPair> {
         let mut body_pairs = vec![
             ("grant_type", "authorization_code"),
             ("code", code),
@@ -216,27 +218,25 @@ impl Client {
 
     /// Refreshes an access token.
     ///
+    /// The returned `TokenPair` will always have a `refresh`.
+    ///
     /// See [RFC6749 section 6](http://tools.ietf.org/html/rfc6749#section-6).
-    ///
-    /// # Panics
-    ///
-    /// Panics if `token` does not contain a `refresh_token`.
-    pub fn refresh_token(&self, token: &Token, scope: Option<&str>) -> Result<Token> {
-        let refresh_token = token.refresh_token.as_ref().unwrap();
+    pub fn refresh_token(&self, refresh: RefreshToken, scope: Option<&str>) -> Result<TokenPair> {
+        let mut result = {
+            let mut body_pairs = vec![
+                ("grant_type", "refresh_token"),
+                ("refresh_token", &refresh.token),
+            ];
+            if let Some(scope) = scope {
+                body_pairs.push(("scope", scope));
+            }
 
-        let mut body_pairs = vec![
-            ("grant_type", "refresh_token"),
-            ("refresh_token", refresh_token),
-        ];
-        if let Some(scope) = scope {
-            body_pairs.push(("scope", scope));
-        }
+            self.token_post(body_pairs)
+        };
 
-        let mut result = self.token_post(body_pairs);
-
-        if let Ok(ref mut token) = result {
-            if token.refresh_token.is_none() {
-                token.refresh_token = Some(refresh_token.clone());
+        if let Ok(ref mut pair) = result {
+            if pair.refresh.is_none() {
+                pair.refresh = Some(refresh);
             }
         }
 

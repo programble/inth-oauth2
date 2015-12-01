@@ -70,8 +70,8 @@
 //! # use inth_oauth2::Client as OAuth2;
 //! # let auth = OAuth2::google(Default::default(), "", "", None);
 //! # let code = String::new();
-//! let token = auth.request_token(&code).unwrap();
-//! println!("{}", token.access_token);
+//! let token_pair = auth.request_token(&code).unwrap();
+//! println!("{}", token_pair.access.token);
 //! ```
 //!
 //! ## Refreshing an access token
@@ -81,36 +81,40 @@
 //! ```no_run
 //! # use inth_oauth2::Client as OAuth2;
 //! # let auth = OAuth2::google(Default::default(), "", "", None);
-//! # let mut token = auth.request_token("").unwrap();
-//! if token.expired() {
-//!     token = auth.refresh_token(&token, None).unwrap();
+//! # let mut token_pair = auth.request_token("").unwrap();
+//! if token_pair.expired() {
+//!     if let Some(refresh) = token_pair.refresh {
+//!         token_pair = auth.refresh_token(refresh, None).unwrap();
+//!     }
 //! }
 //! ```
 //!
 //! ## Persisting tokens
 //!
-//! `Token` implements `Encodable` and `Decodable` from `rustc_serialize`, so can be persisted in
-//! JSON.
+//! `TokenPair` implements `Encodable` and `Decodable` from `rustc_serialize`, so can be persisted
+//! as JSON.
 //!
 //! ```
 //! # extern crate inth_oauth2;
 //! # extern crate rustc_serialize;
 //! # extern crate chrono;
-//! use inth_oauth2::Token;
+//! use inth_oauth2::{TokenPair, AccessToken, RefreshToken};
 //! use rustc_serialize::json;
 //! # use chrono::{UTC, Timelike};
 //! # fn main() {
-//! # let token = Token {
-//! #     access_token: String::from("AAAAAAAA"),
-//! #     token_type: String::from("bearer"),
-//! #     expires: Some(UTC::now().with_nanosecond(0).unwrap()),
-//! #     refresh_token: Some(String::from("BBBBBBB")),
-//! #     scope: None,
+//! # let token_pair = TokenPair {
+//! #     access: AccessToken {
+//! #         token: String::from("AAAAAAAA"),
+//! #         token_type: String::from("bearer"),
+//! #         expires: Some(UTC::now().with_nanosecond(0).unwrap()),
+//! #         scope: None,
+//! #     },
+//! #     refresh: Some(RefreshToken { token: String::from("BBBBBBBB") }),
 //! # };
 //!
-//! let json = json::encode(&token).unwrap();
-//! let decoded: Token = json::decode(&json).unwrap();
-//! assert_eq!(token, decoded);
+//! let json = json::encode(&token_pair).unwrap();
+//! let decoded: TokenPair = json::decode(&json).unwrap();
+//! assert_eq!(token_pair, decoded);
 //! # }
 //! ```
 
@@ -122,7 +126,7 @@ extern crate url;
 pub use client::Client;
 pub mod client;
 
-pub use token::Token;
+pub use token::{TokenPair, AccessToken, RefreshToken};
 pub mod token;
 
 pub use error::{Error, Result};

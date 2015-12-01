@@ -1,13 +1,24 @@
+use std::ops::Deref;
+
 use chrono::{DateTime, UTC, TimeZone};
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
+
+/// OAuth 2.0 access token and refresh token pair.
+#[derive(Debug, Clone, PartialEq, Eq, RustcEncodable, RustcDecodable)]
+pub struct TokenPair {
+    /// The access token.
+    pub access: AccessToken,
+    /// The refresh token.
+    pub refresh: Option<RefreshToken>,
+}
 
 /// OAuth 2.0 access token.
 ///
 /// See [RFC6749 section 5](http://tools.ietf.org/html/rfc6749#section-5).
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Token {
+pub struct AccessToken {
     /// The access token issued by the authorization server.
-    pub access_token: String,
+    pub token: String,
 
     /// The type of the token issued.
     ///
@@ -17,59 +28,71 @@ pub struct Token {
     /// The expiry time of the access token.
     pub expires: Option<DateTime<UTC>>,
 
-    /// The refresh token, which can be used to obtain new access tokens.
-    pub refresh_token: Option<String>,
-
     /// The scope of the access token.
     pub scope: Option<String>,
 }
 
-impl Token {
+/// OAuth 2.0 refresh token.
+///
+/// See [RFC6749 section 1.5](http://tools.ietf.org/html/rfc6749#section-1.5).
+#[derive(Debug, Clone, PartialEq, Eq, RustcEncodable, RustcDecodable)]
+pub struct RefreshToken {
+    /// The refresh token issued by the authorization server.
+    pub token: String,
+}
+
+impl AccessToken {
     /// Returns true if token is expired.
     pub fn expired(&self) -> bool {
         self.expires.map_or(false, |dt| dt < UTC::now())
     }
 }
 
+impl Deref for TokenPair {
+    type Target = AccessToken;
+
+    fn deref<'a>(&'a self) -> &'a AccessToken {
+        &self.access
+    }
+}
+
 #[derive(RustcEncodable, RustcDecodable)]
-struct SerializableToken {
-    access_token: String,
+struct SerializableAccessToken {
+    token: String,
     token_type: String,
     expires: Option<i64>,
-    refresh_token: Option<String>,
     scope: Option<String>,
 }
 
-impl SerializableToken {
-    fn from_token(token: &Token) -> Self {
-        SerializableToken {
-            access_token: token.access_token.clone(),
-            token_type: token.token_type.clone(),
-            expires: token.expires.as_ref().map(DateTime::timestamp),
-            refresh_token: token.refresh_token.clone(),
-            scope: token.scope.clone(),
+impl SerializableAccessToken {
+    fn from_access_token(access: &AccessToken) -> Self {
+        SerializableAccessToken {
+            token: access.token.clone(),
+            token_type: access.token_type.clone(),
+            expires: access.expires.as_ref().map(DateTime::timestamp),
+            scope: access.scope.clone(),
         }
     }
 
-    fn into_token(self) -> Token {
-        Token {
-            access_token: self.access_token,
+    fn into_access_token(self) -> AccessToken {
+        AccessToken {
+            token: self.token,
             token_type: self.token_type,
             expires: self.expires.map(|t| UTC.timestamp(t, 0)),
-            refresh_token: self.refresh_token,
             scope: self.scope,
         }
     }
 }
 
-impl Encodable for Token {
+impl Encodable for AccessToken {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
-        SerializableToken::from_token(self).encode(s)
+        SerializableAccessToken::from_access_token(self).encode(s)
     }
 }
 
-impl Decodable for Token {
+impl Decodable for AccessToken {
     fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
-        SerializableToken::decode(d).map(SerializableToken::into_token)
+        SerializableAccessToken::decode(d)
+            .map(SerializableAccessToken::into_access_token)
     }
 }
