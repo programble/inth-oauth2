@@ -137,7 +137,9 @@ impl Client {
             "https://github.com/login/oauth/access_token"
         )
     }
+}
 
+impl Client {
     /// Constructs an authorization request URI.
     ///
     /// See [RFC6749 section 4.1.1](http://tools.ietf.org/html/rfc6749#section-4.1.1).
