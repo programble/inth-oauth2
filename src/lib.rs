@@ -98,14 +98,14 @@
 //! # extern crate inth_oauth2;
 //! # extern crate rustc_serialize;
 //! # extern crate chrono;
-//! use inth_oauth2::{TokenPair, AccessToken, RefreshToken};
+//! use inth_oauth2::{TokenPair, AccessTokenType, AccessToken, RefreshToken};
 //! use rustc_serialize::json;
 //! # use chrono::{UTC, Timelike};
 //! # fn main() {
 //! # let token_pair = TokenPair {
 //! #     access: AccessToken {
 //! #         token: String::from("AAAAAAAA"),
-//! #         token_type: String::from("bearer"),
+//! #         token_type: AccessTokenType::Bearer,
 //! #         expires: Some(UTC::now().with_nanosecond(0).unwrap()),
 //! #         scope: None,
 //! #     },
@@ -126,7 +126,7 @@ extern crate url;
 pub use client::Client;
 pub mod client;
 
-pub use token::{TokenPair, AccessToken, RefreshToken};
+pub use token::{TokenPair, AccessTokenType, AccessToken, RefreshToken};
 pub mod token;
 
 pub use error::{Error, Result};

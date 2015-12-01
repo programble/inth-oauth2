@@ -5,7 +5,7 @@ use hyper::{self, header, mime};
 use rustc_serialize::json;
 use url::{Url, form_urlencoded};
 
-use super::{TokenPair, AccessToken, RefreshToken};
+use super::{TokenPair, AccessTokenType, AccessToken, RefreshToken};
 use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 
 /// OAuth 2.0 client.
@@ -38,7 +38,10 @@ impl Into<TokenPair> for TokenResponse {
         TokenPair {
             access: AccessToken {
                 token: self.access_token,
-                token_type: self.token_type,
+                token_type: match &self.token_type[..] {
+                    "Bearer" | "bearer" => AccessTokenType::Bearer,
+                    _ => AccessTokenType::Unrecognized(self.token_type),
+                },
                 expires: self.expires_in.map(|s| UTC::now() + Duration::seconds(s)),
                 scope: self.scope,
             },

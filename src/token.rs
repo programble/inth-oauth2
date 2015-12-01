@@ -12,6 +12,20 @@ pub struct TokenPair {
     pub refresh: Option<RefreshToken>,
 }
 
+/// OAuth 2.0 access token type.
+///
+/// See [RFC6749 section 7.1](http://tools.ietf.org/html/rfc6749#section-7.1).
+#[derive(Debug, Clone, PartialEq, Eq, RustcEncodable, RustcDecodable)]
+pub enum AccessTokenType {
+    /// The bearer token type.
+    ///
+    /// See [RFC6750](http://tools.ietf.org/html/rfc6750).
+    Bearer,
+
+    /// An unrecognized token type.
+    Unrecognized(String),
+}
+
 /// OAuth 2.0 access token.
 ///
 /// See [RFC6749 section 5](http://tools.ietf.org/html/rfc6749#section-5).
@@ -21,9 +35,7 @@ pub struct AccessToken {
     pub token: String,
 
     /// The type of the token issued.
-    ///
-    /// See [RFC6749 section 7.1](http://tools.ietf.org/html/rfc6749#section-7.1).
-    pub token_type: String,
+    pub token_type: AccessTokenType,
 
     /// The expiry time of the access token.
     pub expires: Option<DateTime<UTC>>,
@@ -59,7 +71,7 @@ impl Deref for TokenPair {
 #[derive(RustcEncodable, RustcDecodable)]
 struct SerializableAccessToken {
     token: String,
-    token_type: String,
+    token_type: AccessTokenType,
     expires: Option<i64>,
     scope: Option<String>,
 }
