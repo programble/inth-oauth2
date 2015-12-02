@@ -1,6 +1,6 @@
 //! # "It's not that hard" OAuth2 Client
 //!
-//! OAuth2 really isn't that hard, you know?
+//! OAuth 2.0 really isn't that hard, you know?
 //!
 //! Implementation of [RFC6749](http://tools.ietf.org/html/rfc6749).
 //!
@@ -11,15 +11,22 @@
 //!
 //! ## Providers
 //!
-//! `inth_oauth2` can be used with any OAuth 2.0 provider, but provides defaults for a few common
-//! ones.
+//! `inth_oauth2` supports the following OAuth 2.0 providers:
 //!
-//! ### Google
+//! - `Google`
+//! - `GitHub`
+//! - `Imgur`
+//!
+//! Support for others can be added by implementing the `Provider` trait.
+//!
+//! ## Examples
+//!
+//! ### Creating a client
 //!
 //! ```
-//! use inth_oauth2::Client as OAuth2;
+//! use inth_oauth2::{Client, Google};
 //!
-//! let auth = OAuth2::google(
+//! let client = Client::<Google>::new(
 //!     Default::default(),
 //!     "CLIENT_ID",
 //!     "CLIENT_SECRET",
@@ -27,77 +34,42 @@
 //! );
 //! ```
 //!
-//! ### GitHub
+//! ### Constructing an authorization URI
 //!
 //! ```
-//! use inth_oauth2::Client as OAuth2;
-//!
-//! let auth = OAuth2::github(Default::default(), "CLIENT_ID", "CLIENT_SECRET", None);
+//! # use inth_oauth2::{Client, Google};
+//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! let auth_uri = client.auth_uri(Some("scope"), Some("state")).unwrap();
 //! ```
-//!
-//! ### Imgur
-//!
-//! ```
-//! use inth_oauth2::Client as OAuth2;
-//!
-//! let auth = OAuth2::imgur(Default::default(), "CLIENT_ID", "CLIENT_SECRET", None);
-//! ```
-//!
-//! ### Other
-//!
-//! An authorization URI and a token URI are required.
-//!
-//! ```
-//! use inth_oauth2::Client as OAuth2;
-//!
-//! let auth = OAuth2::new(
-//!     Default::default(),
-//!     "https://example.com/oauth2/auth",
-//!     "https://example.com/oauth2/token",
-//!     "CLIENT_ID",
-//!     "CLIENT_SECRET",
-//!     None
-//! );
-//! ```
-//!
-//! ## Constructing an authorization URI
 //!
 //! Direct the user to an authorization URI to have them authorize your application.
 //!
-//! ```
-//! # use inth_oauth2::Client as OAuth2;
-//! # let auth = OAuth2::google(Default::default(), "", "", None);
-//! let auth_uri = auth.auth_uri(Some("scope"), Some("state")).unwrap();
-//! ```
+//! ### Requesting an access token
 //!
-//! ## Requesting an access token
-//!
-//! Using a code obtained from the redirect of the authorization URI, request an access token.
+//! Request an access token using a code obtained from the redirect of the authorization URI.
 //!
 //! ```no_run
-//! # use inth_oauth2::Client as OAuth2;
-//! # let auth = OAuth2::google(Default::default(), "", "", None);
+//! # use inth_oauth2::{Client, Google};
+//! # let client = Client::<Google>::new(Default::default(), "", "", None);
 //! # let code = String::new();
-//! let token_pair = auth.request_token(&code).unwrap();
+//! let token_pair = client.request_token(&code).unwrap();
 //! println!("{}", token_pair.access.token);
 //! ```
 //!
-//! ## Refreshing an access token
-//!
-//! Refresh the access token when it has expired.
+//! ### Refreshing an access token
 //!
 //! ```no_run
-//! # use inth_oauth2::Client as OAuth2;
-//! # let auth = OAuth2::google(Default::default(), "", "", None);
-//! # let mut token_pair = auth.request_token("").unwrap();
+//! # use inth_oauth2::{Client, Google};
+//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! # let mut token_pair = client.request_token("").unwrap();
 //! if token_pair.expired() {
 //!     if let Some(refresh) = token_pair.refresh {
-//!         token_pair = auth.refresh_token(refresh, None).unwrap();
+//!         token_pair = client.refresh_token(refresh, None).unwrap();
 //!     }
 //! }
 //! ```
 //!
-//! ## Using bearer access tokens
+//! ### Using bearer access tokens
 //!
 //! If the obtained token is of the `Bearer` type, a Hyper `Authorization` header can be created
 //! from it.
@@ -106,9 +78,9 @@
 //! # extern crate hyper;
 //! # extern crate inth_oauth2;
 //! # fn main() {
-//! # use inth_oauth2::Client as OAuth2;
-//! # let auth = OAuth2::google(Default::default(), "", "", None);
-//! # let token_pair = auth.request_token("").unwrap();
+//! # use inth_oauth2::{Client, Google};
+//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! # let mut token_pair = client.request_token("").unwrap();
 //! let client = hyper::Client::new();
 //! let res = client.get("https://example.com/resource")
 //!     .header(token_pair.to_bearer_header().unwrap())
@@ -117,7 +89,7 @@
 //! # }
 //! ```
 //!
-//! ## Persisting tokens
+//! ### Persisting tokens
 //!
 //! `TokenPair` implements `Encodable` and `Decodable` from `rustc_serialize`, so can be persisted
 //! as JSON.
@@ -153,6 +125,9 @@ extern crate url;
 
 pub use client::Client;
 pub mod client;
+
+pub use provider::{Provider, Google, GitHub, Imgur};
+pub mod provider;
 
 pub use token::{TokenPair, AccessTokenType, AccessToken, RefreshToken};
 pub mod token;

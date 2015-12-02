@@ -1,10 +1,12 @@
 use std::io::Read;
+use std::marker::PhantomData;
 
 use chrono::{UTC, Duration};
 use hyper::{self, header, mime};
 use rustc_serialize::json;
 use url::{Url, form_urlencoded};
 
+use super::Provider;
 use super::{TokenPair, AccessTokenType, AccessToken, RefreshToken};
 use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 
@@ -13,15 +15,32 @@ use super::error::{Error, Result, OAuth2Error, OAuth2ErrorCode};
 /// Performs HTTP requests using the provided `hyper::Client`.
 ///
 /// See [RFC6749 section 4.1](http://tools.ietf.org/html/rfc6749#section-4.1).
-pub struct Client {
+pub struct Client<P: Provider> {
     http_client: hyper::Client,
-
-    auth_uri: String,
-    token_uri: String,
 
     client_id: String,
     client_secret: String,
     redirect_uri: Option<String>,
+
+    provider: PhantomData<P>,
+}
+
+impl<P: Provider> Client<P> {
+    /// Creates an OAuth 2.0 client.
+    pub fn new<S>(
+        http_client: hyper::Client,
+        client_id: S,
+        client_secret: S,
+        redirect_uri: Option<S>
+    ) -> Self where S: Into<String> {
+        Client {
+            http_client: http_client,
+            client_id: client_id.into(),
+            client_secret: client_secret.into(),
+            redirect_uri: redirect_uri.map(Into::into),
+            provider: PhantomData,
+        }
+    }
 }
 
 #[derive(RustcDecodable)]
@@ -76,81 +95,12 @@ impl Into<OAuth2Error> for ErrorResponse {
     }
 }
 
-macro_rules! site_constructors {
-    (
-        $(
-            #[$attr:meta]
-            $ident:ident => ($auth_uri:expr, $token_uri:expr)
-        ),*
-    ) => {
-        $(
-            #[$attr]
-            pub fn $ident<S>(
-                http_client: hyper::Client,
-                client_id: S,
-                client_secret: S,
-                redirect_uri: Option<S>
-            ) -> Self where S: Into<String> {
-                Client {
-                    http_client: http_client,
-                    auth_uri: String::from($auth_uri),
-                    token_uri: String::from($token_uri),
-                    client_id: client_id.into(),
-                    client_secret: client_secret.into(),
-                    redirect_uri: redirect_uri.map(Into::into),
-                }
-            }
-        )*
-    }
-}
-
-impl Client {
-    /// Creates an OAuth 2.0 client.
-    pub fn new<S>(
-        http_client: hyper::Client,
-        auth_uri: S,
-        token_uri: S,
-        client_id: S,
-        client_secret: S,
-        redirect_uri: Option<S>
-    ) -> Self where S: Into<String> {
-        Client {
-            http_client: http_client,
-            auth_uri: auth_uri.into(),
-            token_uri: token_uri.into(),
-            client_id: client_id.into(),
-            client_secret: client_secret.into(),
-            redirect_uri: redirect_uri.map(Into::into),
-        }
-    }
-
-    site_constructors!{
-        #[doc = "Creates a Google OAuth 2.0 client.\n\nSee [Using OAuth 2.0 to Access Google APIs](https://developers.google.com/identity/protocols/OAuth2)."]
-        google => (
-            "https://accounts.google.com/o/oauth2/auth",
-            "https://accounts.google.com/o/oauth2/token"
-        ),
-
-        #[doc = "Creates a GitHub OAuth 2.0 client.\n\nSee [OAuth, GitHub API](https://developer.github.com/v3/oauth/)."]
-        github => (
-            "https://github.com/login/oauth/authorize",
-            "https://github.com/login/oauth/access_token"
-        ),
-
-        #[doc = "Creates an Imgur OAuth 2.0 client.\n\n See [OAuth 2.0, Imgur](https://api.imgur.com/oauth2)."]
-        imgur => (
-            "https://api.imgur.com/oauth2/authorize",
-            "https://api.imgur.com/oauth2/token"
-        )
-    }
-}
-
-impl Client {
+impl<P: Provider> Client<P> {
     /// Constructs an authorization request URI.
     ///
     /// See [RFC6749 section 4.1.1](http://tools.ietf.org/html/rfc6749#section-4.1.1).
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String> {
-        let mut uri = try!(Url::parse(&self.auth_uri));
+        let mut uri = try!(Url::parse(P::auth_uri()));
 
         let mut query_pairs = vec![
             ("response_type", "code"),
@@ -166,7 +116,7 @@ impl Client {
             query_pairs.push(("state", state));
         }
 
-        uri.set_query_from_pairs(query_pairs.iter());
+        uri.set_query_from_pairs(query_pairs);
 
         Ok(uri.serialize())
     }
@@ -194,7 +144,7 @@ impl Client {
 
     fn token_post(&self, body_pairs: Vec<(&str, &str)>) -> Result<TokenPair> {
         let post_body = form_urlencoded::serialize(body_pairs);
-        let request = self.http_client.post(&self.token_uri)
+        let request = self.http_client.post(P::token_uri())
             .header(self.auth_header())
             .header(self.accept_header())
             .header(header::ContentType::form_url_encoded())

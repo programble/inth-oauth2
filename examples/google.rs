@@ -1,10 +1,10 @@
 extern crate inth_oauth2;
 
 use std::io;
-use inth_oauth2::Client;
+use inth_oauth2::{Client, Google};
 
 fn main() {
-    let client = Client::google(
+    let client = Client::<Google>::new(
         Default::default(),
         "143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com",
         "3kZ5WomzHFlN2f_XbhkyPd3o",

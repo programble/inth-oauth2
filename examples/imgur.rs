@@ -1,10 +1,10 @@
 extern crate inth_oauth2;
 
 use std::io;
-use inth_oauth2::Client;
+use inth_oauth2::{Client, Imgur};
 
 fn main() {
-    let client = Client::imgur(
+    let client = Client::<Imgur>::new(
         Default::default(),
         "505c8ca804230e0",
         "c898d8cf28404102752b2119a3a1c6aab49899c8",

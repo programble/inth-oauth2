@@ -1,10 +1,10 @@
 extern crate inth_oauth2;
 
 use std::io;
-use inth_oauth2::Client;
+use inth_oauth2::{Client, GitHub};
 
 fn main() {
-    let client = Client::github(
+    let client = Client::<GitHub>::new(
         Default::default(),
         "01774654cd9a6051e478",
         "9f14d16d95d605e715ec1a9aecec220d2565fd5c",
