@@ -135,6 +135,12 @@ impl Client {
         github => (
             "https://github.com/login/oauth/authorize",
             "https://github.com/login/oauth/access_token"
+        ),
+
+        #[doc = "Creates an Imgur OAuth 2.0 client.\n\n See [OAuth 2.0, Imgur](https://api.imgur.com/oauth2)."]
+        imgur => (
+            "https://api.imgur.com/oauth2/authorize",
+            "https://api.imgur.com/oauth2/token"
         )
     }
 }

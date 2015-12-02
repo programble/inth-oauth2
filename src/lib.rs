@@ -35,6 +35,14 @@
 //! let auth = OAuth2::github(Default::default(), "CLIENT_ID", "CLIENT_SECRET", None);
 //! ```
 //!
+//! ### Imgur
+//!
+//! ```
+//! use inth_oauth2::Client as OAuth2;
+//!
+//! let auth = OAuth2::imgur(Default::default(), "CLIENT_ID", "CLIENT_SECRET", None);
+//! ```
+//!
 //! ### Other
 //!
 //! An authorization URI and a token URI are required.
