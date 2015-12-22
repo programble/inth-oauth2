@@ -4,7 +4,7 @@ use super::{Token, Lifetime};
 
 /// The bearer token type.
 ///
-/// See [RFC6750](http://tools.ietf.org/html/rfc6750).
+/// See [RFC 6750](http://tools.ietf.org/html/rfc6750).
 pub struct Bearer<L: Lifetime> {
     access_token: String,
     scope: Option<String>,
