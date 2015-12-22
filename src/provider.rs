@@ -43,3 +43,14 @@ impl Provider for GitHub {
     fn auth_uri() -> &'static str { "https://github.com/login/oauth/authorize" }
     fn token_uri() -> &'static str { "https://github.com/login/oauth/access_token" }
 }
+
+/// Imgur OAuth 2.0 provider.
+///
+/// See [OAuth 2.0, Imgur](https://api.imgur.com/oauth2).
+pub struct Imgur;
+impl Provider for Imgur {
+    type Lifetime = Expiring;
+    type Token = Bearer<Expiring>;
+    fn auth_uri() -> &'static str { "https://api.imgur.com/oauth2/authorize" }
+    fn token_uri() -> &'static str { "https://api.imgur.com/oauth2/token" }
+}
