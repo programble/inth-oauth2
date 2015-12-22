@@ -50,6 +50,25 @@ impl<P: Provider> Client<P> {
     /// Returns an authorization endpoint URI to direct the user to.
     ///
     /// See [RFC 6749, section 3.1](http://tools.ietf.org/html/rfc6749#section-3.1).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use inth_oauth2::client::Client;
+    /// use inth_oauth2::provider::Google;
+    ///
+    /// let client = Client::<Google>::new(
+    ///     Default::default(),
+    ///     "CLIENT_ID",
+    ///     "CLIENT_SECRET",
+    ///     Some("urn:ietf:wg:oauth:2.0:oob")
+    /// );
+    ///
+    /// let auth_uri = client.auth_uri(
+    ///     Some("https://www.googleapis.com/auth/userinfo.email"),
+    ///     None
+    /// );
+    /// ```
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String, url::ParseError>
     {
         let mut uri = try!(Url::parse(P::auth_uri()));
