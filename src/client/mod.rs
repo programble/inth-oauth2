@@ -7,8 +7,7 @@ use url::{self, form_urlencoded, Url};
 
 use provider::Provider;
 
-pub use self::from_response::{FromResponse, ParseError};
-mod from_response;
+pub mod response;
 
 /// OAuth 2.0 client.
 pub struct Client<P: Provider> {
