@@ -26,3 +26,6 @@ pub trait Lifetime {
     /// Returns true if the token is no longer valid.
     fn expired(&self) -> bool;
 }
+
+pub use self::bearer::Bearer;
+mod bearer;
