@@ -4,3 +4,4 @@ extern crate rustc_serialize;
 extern crate url;
 
 pub mod token;
+pub mod provider;
