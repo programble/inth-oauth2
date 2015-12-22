@@ -25,6 +25,7 @@ pub trait Provider {
 ///
 /// See [Using OAuth 2.0 to Access Google
 /// APIs](https://developers.google.com/identity/protocols/OAuth2).
+#[derive(Debug)]
 pub struct Google;
 impl Provider for Google {
     type Lifetime = Expiring;
@@ -36,6 +37,7 @@ impl Provider for Google {
 /// GitHub OAuth 2.0 provider.
 ///
 /// See [OAuth, GitHub Developer Guide](https://developer.github.com/v3/oauth/).
+#[derive(Debug)]
 pub struct GitHub;
 impl Provider for GitHub {
     type Lifetime = Static;
@@ -47,6 +49,7 @@ impl Provider for GitHub {
 /// Imgur OAuth 2.0 provider.
 ///
 /// See [OAuth 2.0, Imgur](https://api.imgur.com/oauth2).
+#[derive(Debug)]
 pub struct Imgur;
 impl Provider for Imgur {
     type Lifetime = Expiring;

@@ -3,6 +3,7 @@ use chrono::{DateTime, UTC};
 use super::Lifetime;
 
 /// An expiring token.
+#[derive(Debug)]
 pub struct Expiring {
     refresh_token: String,
     expires: DateTime<UTC>,
