@@ -36,6 +36,20 @@ pub enum OAuth2ErrorCode {
     Unrecognized(String),
 }
 
+impl<'a> From<&'a str> for OAuth2ErrorCode {
+    fn from(s: &str) -> OAuth2ErrorCode {
+        match s {
+            "invalid_request" => OAuth2ErrorCode::InvalidRequest,
+            "invalid_client" => OAuth2ErrorCode::InvalidClient,
+            "invalid_grant" => OAuth2ErrorCode::InvalidGrant,
+            "unauthorized_client" => OAuth2ErrorCode::UnauthorizedClient,
+            "unsupported_grant_type" => OAuth2ErrorCode::UnsupportedGrantType,
+            "invalid_scope" => OAuth2ErrorCode::InvalidScope,
+            s => OAuth2ErrorCode::Unrecognized(s.to_string()),
+        }
+    }
+}
+
 /// OAuth 2.0 error.
 ///
 /// See [RFC 6749, section 5.2](http://tools.ietf.org/html/rfc6749#section-5.2).
