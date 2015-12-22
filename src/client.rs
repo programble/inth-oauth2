@@ -3,6 +3,7 @@
 use std::marker::PhantomData;
 
 use hyper;
+use url::{self, form_urlencoded, Url};
 
 use provider::Provider;
 
@@ -44,5 +45,31 @@ impl<P: Provider> Client<P> {
             redirect_uri: redirect_uri.map(Into::into),
             provider: PhantomData,
         }
+    }
+
+    /// Returns an authorization endpoint URI to direct the user to.
+    ///
+    /// See [RFC 6749, section 3.1](http://tools.ietf.org/html/rfc6749#section-3.1).
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String, url::ParseError>
+    {
+        let mut uri = try!(Url::parse(P::auth_uri()));
+
+        let mut query_pairs = vec![
+            ("response_type", "code"),
+            ("client_id", &self.client_id),
+        ];
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            query_pairs.push(("redirect_uri", redirect_uri));
+        }
+        if let Some(scope) = scope {
+            query_pairs.push(("scope", scope));
+        }
+        if let Some(state) = state {
+            query_pairs.push(("state", state));
+        }
+
+        uri.set_query_from_pairs(query_pairs.iter());
+
+        Ok(uri.serialize())
     }
 }
