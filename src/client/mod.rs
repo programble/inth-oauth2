@@ -1,5 +1,6 @@
 //! Client.
 
+use std::fmt;
 use std::marker::PhantomData;
 
 use hyper;
@@ -16,6 +17,16 @@ pub struct Client<P: Provider> {
     client_secret: String,
     redirect_uri: Option<String>,
     provider: PhantomData<P>,
+}
+
+impl<P: Provider> fmt::Debug for Client<P> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        f.debug_struct("Client")
+            .field("client_id", &self.client_id)
+            .field("client_secret", &self.client_secret)
+            .field("redirect_uri", &self.redirect_uri)
+            .finish()
+    }
 }
 
 impl<P: Provider> Client<P> {
