@@ -5,3 +5,4 @@ extern crate url;
 
 pub mod token;
 pub mod provider;
+pub mod client;
