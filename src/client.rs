@@ -73,3 +73,59 @@ impl<P: Provider> Client<P> {
         Ok(uri.serialize())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use token::{Bearer, Static};
+    use provider::Provider;
+    use super::Client;
+
+    struct Test;
+    impl Provider for Test {
+        type Lifetime = Static;
+        type Token = Bearer<Static>;
+        fn auth_uri() -> &'static str { "http://example.com/oauth2/auth" }
+        fn token_uri() -> &'static str { "http://example.com/oauth2/token" }
+    }
+
+    #[test]
+    fn auth_uri() {
+        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        assert_eq!(
+            "http://example.com/oauth2/auth?response_type=code&client_id=foo",
+            client.auth_uri(None, None).unwrap()
+        );
+    }
+
+    #[test]
+    fn auth_uri_with_redirect_uri() {
+        let client = Client::<Test>::new(
+            Default::default(),
+            "foo",
+            "bar",
+            Some("http://example.com/oauth2/callback")
+        );
+        assert_eq!(
+            "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
+            client.auth_uri(None, None).unwrap()
+        );
+    }
+
+    #[test]
+    fn auth_uri_with_scope() {
+        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        assert_eq!(
+            "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
+            client.auth_uri(Some("baz"), None).unwrap()
+        );
+    }
+
+    #[test]
+    fn auth_uri_with_state() {
+        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        assert_eq!(
+            "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
+            client.auth_uri(None, Some("baz")).unwrap()
+        );
+    }
+}
