@@ -3,6 +3,10 @@
 use std::error::Error;
 use std::fmt;
 
+use rustc_serialize::json::Json;
+
+use client::response::{FromResponse, ParseError, JsonHelper};
+
 /// OAuth 2.0 error codes.
 ///
 /// See [RFC 6749, section 5.2](http://tools.ietf.org/html/rfc6749#section-5.2).
@@ -80,4 +84,21 @@ impl fmt::Display for OAuth2Error {
 
 impl Error for OAuth2Error {
     fn description(&self) -> &str { "OAuth 2.0 API error" }
+}
+
+impl FromResponse for OAuth2Error {
+    fn from_response(json: &Json) -> Result<Self, ParseError> {
+        let json = JsonHelper(json);
+        let obj = try!(json.as_object());
+
+        let code = try!(obj.get_string("error"));
+        let description = obj.0.get("error_description").and_then(Json::as_string);
+        let uri = obj.0.get("error_uri").and_then(Json::as_string);
+
+        Ok(OAuth2Error {
+            code: code.into(),
+            description: description.map(Into::into),
+            uri: uri.map(Into::into),
+        })
+    }
 }
