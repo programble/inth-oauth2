@@ -1,4 +1,9 @@
 //! Tokens.
+//!
+//! Access token types are abstracted through the `Token` trait. See
+//! [RFC6749, section 7.1](http://tools.ietf.org/html/rfc6749#section-7.1).
+//!
+//! Expiring and non-expiring tokens are abstracted through the `Lifetime` trait.
 
 /// OAuth 2.0 tokens.
 ///
