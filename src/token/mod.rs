@@ -23,7 +23,7 @@ pub trait Token<L: Lifetime> {
 
 /// OAuth 2.0 token lifetimes.
 pub trait Lifetime {
-    /// Returns true if the token is no longer valid.
+    /// Returns true if the access token is no longer valid.
     fn expired(&self) -> bool;
 }
 
@@ -32,3 +32,6 @@ mod bearer;
 
 pub use self::statik::Static;
 mod statik;
+
+pub use self::expiring::Expiring;
+mod expiring;
