@@ -29,3 +29,6 @@ pub trait Lifetime {
 
 pub use self::bearer::Bearer;
 mod bearer;
+
+pub use self::statik::Static;
+mod statik;
