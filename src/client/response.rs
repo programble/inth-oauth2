@@ -9,6 +9,15 @@ use rustc_serialize::json::Json;
 pub trait FromResponse: Sized {
     /// Parse a JSON response.
     fn from_response(json: &Json) -> Result<Self, ParseError>;
+
+    /// Parse a JSON response, inheriting missing values from the previous instance.
+    ///
+    /// Necessary for parsing refresh token responses where the absence of a new refresh token
+    /// implies that the previous refresh token is still valid.
+    #[allow(unused_variables)]
+    fn from_response_inherit(json: &Json, prev: &Self) -> Result<Self, ParseError> {
+        FromResponse::from_response(json)
+    }
 }
 
 /// Response parse errors.
