@@ -10,6 +10,9 @@ use provider::Provider;
 
 pub mod response;
 
+pub use self::error::ClientError;
+mod error;
+
 /// OAuth 2.0 client.
 pub struct Client<P: Provider> {
     http_client: hyper::Client,
