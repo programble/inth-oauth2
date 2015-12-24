@@ -21,7 +21,7 @@ pub trait FromResponse: Sized {
 }
 
 /// Response parse errors.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum ParseError {
     /// Expected response to be of type.
     ExpectedType(&'static str),
