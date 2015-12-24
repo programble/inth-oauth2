@@ -7,7 +7,7 @@ use client::response::{FromResponse, ParseError, JsonHelper};
 /// The bearer token type.
 ///
 /// See [RFC 6750](http://tools.ietf.org/html/rfc6750).
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, RustcEncodable, RustcDecodable)]
 pub struct Bearer<L: Lifetime> {
     access_token: String,
     scope: Option<String>,

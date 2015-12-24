@@ -1,5 +1,6 @@
-use chrono::{DateTime, UTC, Duration};
+use chrono::{DateTime, UTC, Duration, TimeZone};
 use rustc_serialize::json::Json;
+use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
 
 use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
@@ -51,6 +52,42 @@ impl FromResponse for Expiring {
             refresh_token: refresh_token.into(),
             expires: UTC::now() + Duration::seconds(expires_in),
         })
+    }
+}
+
+#[derive(RustcEncodable, RustcDecodable)]
+struct Serializable {
+    refresh_token: String,
+    expires: i64,
+}
+
+impl<'a> From<&'a Expiring> for Serializable {
+    fn from(expiring: &Expiring) -> Self {
+        Serializable {
+            refresh_token: expiring.refresh_token.clone(),
+            expires: expiring.expires.timestamp(),
+        }
+    }
+}
+
+impl Into<Expiring> for Serializable {
+    fn into(self) -> Expiring {
+        Expiring {
+            refresh_token: self.refresh_token,
+            expires: UTC.timestamp(self.expires, 0),
+        }
+    }
+}
+
+impl Encodable for Expiring {
+    fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
+        Serializable::from(self).encode(s)
+    }
+}
+
+impl Decodable for Expiring {
+    fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
+        Serializable::decode(d).map(Into::into)
     }
 }
 
