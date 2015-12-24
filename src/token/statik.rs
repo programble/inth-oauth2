@@ -20,3 +20,26 @@ impl FromResponse for Static {
         Ok(Static)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rustc_serialize::json::Json;
+
+    use client::response::{FromResponse, ParseError};
+    use super::Static;
+
+    #[test]
+    fn from_response() {
+        let json = Json::from_str("{}").unwrap();
+        assert_eq!(Static, Static::from_response(&json).unwrap());
+    }
+
+    #[test]
+    fn from_response_with_expires_in() {
+        let json = Json::from_str(r#"{"expires_in":3600}"#).unwrap();
+        assert_eq!(
+            ParseError::UnexpectedField("expires_in"),
+            Static::from_response(&json).unwrap_err()
+        );
+    }
+}
