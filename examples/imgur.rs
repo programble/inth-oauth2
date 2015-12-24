@@ -1,5 +1,7 @@
 extern crate inth_oauth2;
 
+use std::io;
+
 use inth_oauth2::client::Client;
 use inth_oauth2::provider::Imgur;
 
@@ -13,4 +15,13 @@ fn main() {
 
     let auth_uri = client.auth_uri(None, None).unwrap();
     println!("{}", auth_uri);
+
+    let mut code = String::new();
+    io::stdin().read_line(&mut code).unwrap();
+
+    let token = client.request_token(code.trim()).unwrap();
+    println!("{:?}", token);
+
+    let token = client.refresh_token(token, None).unwrap();
+    println!("{:?}", token);
 }
