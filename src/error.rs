@@ -88,8 +88,7 @@ impl Error for OAuth2Error {
 
 impl FromResponse for OAuth2Error {
     fn from_response(json: &Json) -> Result<Self, ParseError> {
-        let json = JsonHelper(json);
-        let obj = try!(json.as_object());
+        let obj = try!(JsonHelper(json).as_object());
 
         let code = try!(obj.get_string("error"));
         let description = obj.get_string_option("error_description");
