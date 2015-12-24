@@ -15,6 +15,9 @@ extern crate hyper;
 extern crate rustc_serialize;
 extern crate url;
 
+pub use token::{Token, Lifetime};
+pub use client::{Client, ClientError};
+
 pub mod token;
 pub mod provider;
 pub mod error;
