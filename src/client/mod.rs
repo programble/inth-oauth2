@@ -5,7 +5,7 @@ use std::marker::PhantomData;
 
 use hyper::{self, header, mime};
 use rustc_serialize::json::Json;
-use url::{self, form_urlencoded, Url};
+use url::{form_urlencoded, Url};
 
 use error::OAuth2Error;
 use provider::Provider;
@@ -88,7 +88,7 @@ impl<P: Provider> Client<P> {
     ///     None
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String, url::ParseError>
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String, ClientError>
     {
         let mut uri = try!(Url::parse(P::auth_uri()));
 
