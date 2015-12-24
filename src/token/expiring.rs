@@ -53,3 +53,34 @@ impl FromResponse for Expiring {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use chrono::{UTC, Duration};
+    use rustc_serialize::json::Json;
+
+    use client::response::FromResponse;
+    use super::Expiring;
+
+    #[test]
+    fn from_response() {
+        let json = Json::from_str(r#"{"refresh_token":"aaaaaaaa","expires_in":3600}"#).unwrap();
+        let expiring = Expiring::from_response(&json).unwrap();
+        assert_eq!("aaaaaaaa", expiring.refresh_token);
+        assert!(expiring.expires > UTC::now());
+        assert!(expiring.expires <= UTC::now() + Duration::seconds(3600));
+    }
+
+    #[test]
+    fn from_response_inherit() {
+        let json = Json::from_str(r#"{"expires_in":3600}"#).unwrap();
+        let prev = Expiring {
+            refresh_token: String::from("aaaaaaaa"),
+            expires: UTC::now(),
+        };
+        let expiring = Expiring::from_response_inherit(&json, &prev).unwrap();
+        assert_eq!("aaaaaaaa", expiring.refresh_token);
+        assert!(expiring.expires > UTC::now());
+        assert!(expiring.expires <= UTC::now() + Duration::seconds(3600));
+    }
+}
