@@ -111,6 +111,36 @@ impl<P: Provider> Client<P> {
         Ok(uri.serialize())
     }
 
+    fn post_token(&self, body_pairs: Vec<(&str, &str)>) -> Result<Json, ClientError> {
+        let body = form_urlencoded::serialize(body_pairs);
+        let auth_header = header::Authorization(
+            header::Basic {
+                username: self.client_id.clone(),
+                password: Some(self.client_secret.clone()),
+            }
+        );
+        let accept_header = header::Accept(vec![
+            header::qitem(mime::Mime(mime::TopLevel::Application, mime::SubLevel::Json, vec![])),
+        ]);
+
+        let request = self.http_client.post(P::token_uri())
+            .header(auth_header)
+            .header(accept_header)
+            .header(header::ContentType::form_url_encoded())
+            .body(&body);
+
+        let mut response = try!(request.send());
+        let json = try!(Json::from_reader(&mut response));
+
+        let error = OAuth2Error::from_response(&json);
+
+        if let Ok(error) = error {
+            Err(ClientError::from(error))
+        } else {
+            Ok(json)
+        }
+    }
+
     /// Requests an access token using an authorization code.
     ///
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
@@ -123,36 +153,7 @@ impl<P: Provider> Client<P> {
             body_pairs.push(("redirect_uri", redirect_uri));
         }
 
-        let post_body = form_urlencoded::serialize(body_pairs);
-        let request = self.http_client.post(P::token_uri())
-            .header(
-                header::Authorization(header::Basic {
-                    username: self.client_id.clone(),
-                    password: Some(self.client_secret.clone()),
-                })
-            )
-            .header(
-                header::Accept(vec![
-                    header::qitem(
-                        mime::Mime(
-                            mime::TopLevel::Application,
-                            mime::SubLevel::Json,
-                            vec![]
-                        )
-                    )
-                ])
-            )
-            .header(header::ContentType::form_url_encoded())
-            .body(&post_body);
-
-        let mut response = try!(request.send());
-        let json = try!(Json::from_reader(&mut response));
-
-        let error = OAuth2Error::from_response(&json);
-        if let Ok(error) = error {
-            return Err(ClientError::from(error));
-        }
-
+        let json = try!(self.post_token(body_pairs));
         let token = try!(P::Token::from_response(&json));
         Ok(token)
     }
