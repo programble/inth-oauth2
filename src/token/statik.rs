@@ -4,7 +4,7 @@ use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
 
 /// A static, non-expiring token.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Static;
 
 impl Lifetime for Static {
