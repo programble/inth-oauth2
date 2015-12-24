@@ -73,10 +73,13 @@ impl<'a> JsonHelper<'a> {
 pub struct JsonObjectHelper<'a>(pub &'a json::Object);
 
 impl<'a> JsonObjectHelper<'a> {
+    /// Gets a field as a string or returns `None`.
+    pub fn get_string_option(&self, key: &'static str) -> Option<&'a str> {
+        self.0.get(key).and_then(Json::as_string)
+    }
+
     /// Gets a field as a string or fails with `ParseError::ExpectedFieldType`.
     pub fn get_string(&self, key: &'static str) -> Result<&'a str, ParseError> {
-        self.0.get(key)
-            .and_then(Json::as_string)
-            .ok_or(ParseError::ExpectedFieldType(key, "string"))
+        self.get_string_option(key).ok_or(ParseError::ExpectedFieldType(key, "string"))
     }
 }

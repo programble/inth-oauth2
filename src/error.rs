@@ -92,8 +92,8 @@ impl FromResponse for OAuth2Error {
         let obj = try!(json.as_object());
 
         let code = try!(obj.get_string("error"));
-        let description = obj.0.get("error_description").and_then(Json::as_string);
-        let uri = obj.0.get("error_uri").and_then(Json::as_string);
+        let description = obj.get_string_option("error_description");
+        let uri = obj.get_string_option("error_uri");
 
         Ok(OAuth2Error {
             code: code.into(),
