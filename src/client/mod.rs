@@ -9,6 +9,7 @@ use url::{form_urlencoded, Url};
 
 use error::OAuth2Error;
 use provider::Provider;
+use token::{Token, Expiring};
 
 use self::response::FromResponse;
 pub mod response;
@@ -155,6 +156,29 @@ impl<P: Provider> Client<P> {
 
         let json = try!(self.post_token(body_pairs));
         let token = try!(P::Token::from_response(&json));
+        Ok(token)
+    }
+}
+
+impl<P: Provider> Client<P> where P::Token: Token<Expiring> {
+    /// Refreshes an access token.
+    ///
+    /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
+    pub fn refresh_token(
+        &self,
+        token: P::Token,
+        scope: Option<&str>
+    ) -> Result<P::Token, ClientError> {
+        let mut body_pairs = vec![
+            ("grant_type", "refresh_token"),
+            ("refresh_token", token.lifetime().refresh_token()),
+        ];
+        if let Some(scope) = scope {
+            body_pairs.push(("scope", scope));
+        }
+
+        let json = try!(self.post_token(body_pairs));
+        let token = try!(P::Token::from_response_inherit(&json, &token));
         Ok(token)
     }
 }
