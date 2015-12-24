@@ -3,11 +3,14 @@
 use std::fmt;
 use std::marker::PhantomData;
 
-use hyper;
+use hyper::{self, header, mime};
+use rustc_serialize::json::Json;
 use url::{self, form_urlencoded, Url};
 
+use error::OAuth2Error;
 use provider::Provider;
 
+use self::response::FromResponse;
 pub mod response;
 
 pub use self::error::ClientError;
@@ -106,6 +109,52 @@ impl<P: Provider> Client<P> {
         uri.set_query_from_pairs(query_pairs.iter());
 
         Ok(uri.serialize())
+    }
+
+    /// Requests an access token using an authorization code.
+    ///
+    /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
+    pub fn request_token(&self, code: &str) -> Result<P::Token, ClientError> {
+        let mut body_pairs = vec![
+            ("grant_type", "authorization_code"),
+            ("code", code),
+        ];
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            body_pairs.push(("redirect_uri", redirect_uri));
+        }
+
+        let post_body = form_urlencoded::serialize(body_pairs);
+        let request = self.http_client.post(P::token_uri())
+            .header(
+                header::Authorization(header::Basic {
+                    username: self.client_id.clone(),
+                    password: Some(self.client_secret.clone()),
+                })
+            )
+            .header(
+                header::Accept(vec![
+                    header::qitem(
+                        mime::Mime(
+                            mime::TopLevel::Application,
+                            mime::SubLevel::Json,
+                            vec![]
+                        )
+                    )
+                ])
+            )
+            .header(header::ContentType::form_url_encoded())
+            .body(&post_body);
+
+        let mut response = try!(request.send());
+        let json = try!(Json::from_reader(&mut response));
+
+        let error = OAuth2Error::from_response(&json);
+        if let Ok(error) = error {
+            return Err(ClientError::from(error));
+        }
+
+        let token = try!(P::Token::from_response(&json));
+        Ok(token)
     }
 }
 
