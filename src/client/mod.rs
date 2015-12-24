@@ -9,7 +9,7 @@ use url::{form_urlencoded, Url};
 
 use error::OAuth2Error;
 use provider::Provider;
-use token::{Token, Expiring};
+use token::{Token, Lifetime, Expiring};
 
 use self::response::FromResponse;
 pub mod response;
@@ -180,6 +180,15 @@ impl<P: Provider> Client<P> where P::Token: Token<Expiring> {
         let json = try!(self.post_token(body_pairs));
         let token = try!(P::Token::from_response_inherit(&json, &token));
         Ok(token)
+    }
+
+    /// Ensures an access token is valid by refreshing it if necessary.
+    pub fn ensure_token(&self, token: P::Token) -> Result<P::Token, ClientError> {
+        if token.lifetime().expired() {
+            self.refresh_token(token, None)
+        } else {
+            Ok(token)
+        }
     }
 }
 
