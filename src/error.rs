@@ -102,3 +102,62 @@ impl FromResponse for OAuth2Error {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rustc_serialize::json::Json;
+
+    use client::response::{FromResponse, ParseError};
+    use super::{OAuth2Error, OAuth2ErrorCode};
+
+    #[test]
+    fn from_response_empty() {
+        let json = Json::from_str("{}").unwrap();
+        assert_eq!(
+            ParseError::ExpectedFieldType("error", "string"),
+            OAuth2Error::from_response(&json).unwrap_err()
+        );
+    }
+
+    #[test]
+    fn from_response() {
+        let json = Json::from_str(r#"{"error":"invalid_request"}"#).unwrap();
+        assert_eq!(
+            OAuth2Error {
+                code: OAuth2ErrorCode::InvalidRequest,
+                description: None,
+                uri: None,
+            },
+            OAuth2Error::from_response(&json).unwrap()
+        );
+    }
+
+    #[test]
+    fn from_response_with_description() {
+        let json = Json::from_str(r#"{"error":"invalid_request","error_description":"foo"}"#)
+            .unwrap();
+        assert_eq!(
+            OAuth2Error {
+                code: OAuth2ErrorCode::InvalidRequest,
+                description: Some(String::from("foo")),
+                uri: None,
+            },
+            OAuth2Error::from_response(&json).unwrap()
+        );
+    }
+
+    #[test]
+    fn from_response_with_uri() {
+        let json = Json::from_str(
+            r#"{"error":"invalid_request","error_uri":"http://example.com"}"#
+        ).unwrap();
+        assert_eq!(
+            OAuth2Error {
+                code: OAuth2ErrorCode::InvalidRequest,
+                description: None,
+                uri: Some(String::from("http://example.com")),
+            },
+            OAuth2Error::from_response(&json).unwrap()
+        );
+    }
+}
