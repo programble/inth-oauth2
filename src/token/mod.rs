@@ -5,10 +5,12 @@
 //!
 //! Expiring and non-expiring tokens are abstracted through the `Lifetime` trait.
 
+use client::response::FromResponse;
+
 /// OAuth 2.0 tokens.
 ///
 /// See [RFC 6749, section 5](http://tools.ietf.org/html/rfc6749#section-5).
-pub trait Token<L: Lifetime> {
+pub trait Token<L: Lifetime>: FromResponse {
     /// Returns the access token.
     ///
     /// See [RF C6749, section 1.4](http://tools.ietf.org/html/rfc6749#section-1.4).
@@ -22,7 +24,7 @@ pub trait Token<L: Lifetime> {
 }
 
 /// OAuth 2.0 token lifetimes.
-pub trait Lifetime {
+pub trait Lifetime: FromResponse {
     /// Returns true if the access token is no longer valid.
     fn expired(&self) -> bool;
 }

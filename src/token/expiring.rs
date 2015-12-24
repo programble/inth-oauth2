@@ -1,6 +1,8 @@
-use chrono::{DateTime, UTC};
+use chrono::{DateTime, UTC, Duration};
+use rustc_serialize::json::Json;
 
 use super::Lifetime;
+use client::response::{FromResponse, ParseError, JsonHelper};
 
 /// An expiring token.
 #[derive(Debug)]
@@ -21,4 +23,33 @@ impl Expiring {
 
 impl Lifetime for Expiring {
     fn expired(&self) -> bool { self.expires < UTC::now() }
+}
+
+impl FromResponse for Expiring {
+    fn from_response(json: &Json) -> Result<Self, ParseError> {
+        let obj = try!(JsonHelper(json).as_object());
+
+        let refresh_token = try!(obj.get_string("refresh_token"));
+        let expires_in = try!(obj.get_i64("expires_in"));
+
+        Ok(Expiring {
+            refresh_token: refresh_token.into(),
+            expires: UTC::now() + Duration::seconds(expires_in),
+        })
+    }
+
+    fn from_response_inherit(json: &Json, prev: &Self) -> Result<Self, ParseError> {
+        let obj = try!(JsonHelper(json).as_object());
+
+        let refresh_token = try! {
+            obj.get_string("refresh_token")
+                .or(Ok(&prev.refresh_token))
+        };
+        let expires_in = try!(obj.get_i64("expires_in"));
+
+        Ok(Expiring {
+            refresh_token: refresh_token.into(),
+            expires: UTC::now() + Duration::seconds(expires_in),
+        })
+    }
 }

@@ -82,4 +82,14 @@ impl<'a> JsonObjectHelper<'a> {
     pub fn get_string(&self, key: &'static str) -> Result<&'a str, ParseError> {
         self.get_string_option(key).ok_or(ParseError::ExpectedFieldType(key, "string"))
     }
+
+    /// Gets a field as an i64 or returns `None`.
+    pub fn get_i64_option(&self, key: &'static str) -> Option<i64> {
+        self.0.get(key).and_then(Json::as_i64)
+    }
+
+    /// Gets a field as an i64 or fails with `ParseError::ExpectedFieldType`.
+    pub fn get_i64(&self, key: &'static str) -> Result<i64, ParseError> {
+        self.get_i64_option(key).ok_or(ParseError::ExpectedFieldType(key, "i64"))
+    }
 }
