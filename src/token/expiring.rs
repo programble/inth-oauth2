@@ -93,8 +93,8 @@ impl Decodable for Expiring {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{UTC, Duration};
-    use rustc_serialize::json::Json;
+    use chrono::{UTC, Duration, Timelike};
+    use rustc_serialize::json::{self, Json};
 
     use client::response::FromResponse;
     use super::Expiring;
@@ -119,5 +119,16 @@ mod tests {
         assert_eq!("aaaaaaaa", expiring.refresh_token);
         assert!(expiring.expires > UTC::now());
         assert!(expiring.expires <= UTC::now() + Duration::seconds(3600));
+    }
+
+    #[test]
+    fn encode_decode() {
+        let expiring = Expiring {
+            refresh_token: String::from("foo"),
+            expires: UTC::now().with_nanosecond(0).unwrap(),
+        };
+        let json = json::encode(&expiring).unwrap();
+        let decoded = json::decode(&json).unwrap();
+        assert_eq!(expiring, decoded);
     }
 }
