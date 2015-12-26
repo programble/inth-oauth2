@@ -2,7 +2,7 @@ extern crate inth_oauth2;
 
 use std::io;
 
-use inth_oauth2::client::Client;
+use inth_oauth2::Client;
 use inth_oauth2::provider::Imgur;
 
 fn main() {

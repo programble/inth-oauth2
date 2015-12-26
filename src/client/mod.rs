@@ -42,7 +42,7 @@ impl<P: Provider> Client<P> {
     /// # Examples
     ///
     /// ```
-    /// use inth_oauth2::client::Client;
+    /// use inth_oauth2::Client;
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
@@ -74,7 +74,7 @@ impl<P: Provider> Client<P> {
     /// # Examples
     ///
     /// ```
-    /// use inth_oauth2::client::Client;
+    /// use inth_oauth2::Client;
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
