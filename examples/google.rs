@@ -1,7 +1,9 @@
 extern crate inth_oauth2;
 
 use std::io;
-use inth_oauth2::{Client, Google};
+
+use inth_oauth2::Client;
+use inth_oauth2::provider::Google;
 
 fn main() {
     let client = Client::<Google>::new(
@@ -11,21 +13,16 @@ fn main() {
         Some("urn:ietf:wg:oauth:2.0:oob")
     );
 
-    let auth_uri = client.auth_uri(
-        Some("https://www.googleapis.com/auth/userinfo.email"),
-        None
-    ).unwrap();
-
+    let auth_uri = client.auth_uri(Some("https://www.googleapis.com/auth/userinfo.email"), None)
+        .unwrap();
     println!("{}", auth_uri);
 
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    let token_pair = client.request_token(code.trim()).unwrap();
+    let token = client.request_token(code.trim()).unwrap();
+    println!("{:?}", token);
 
-    println!("{:?}", token_pair);
-
-    let refreshed = client.refresh_token(token_pair.refresh.unwrap(), None).unwrap();
-
-    println!("{:?}", refreshed);
+    let token = client.refresh_token(token, None).unwrap();
+    println!("{:?}", token);
 }
