@@ -31,17 +31,17 @@ mod provider {
 mod connector {
     use hyper;
 
-    mock_connector_in_order!(BearerStaticSuccess {
-        include_str!("response/request_token_bearer_static_success.http")
+    mock_connector_in_order!(BearerStatic {
+        include_str!("response/request_token_bearer_static.http")
     });
 
-    mock_connector_in_order!(BearerExpiringSuccess {
-        include_str!("response/request_token_bearer_expiring_success.http")
+    mock_connector_in_order!(BearerExpiring {
+        include_str!("response/request_token_bearer_expiring.http")
         include_str!("response/refresh_token_bearer_full.http")
     });
 
-    mock_connector_in_order!(BearerExpiringSuccessPartial {
-        include_str!("response/request_token_bearer_expiring_success.http")
+    mock_connector_in_order!(BearerExpiringPartial {
+        include_str!("response/request_token_bearer_expiring.http")
         include_str!("response/refresh_token_bearer_partial.http")
     });
 }
@@ -60,7 +60,7 @@ macro_rules! mock_client {
 
 #[test]
 fn request_token_bearer_static_success() {
-    let client = mock_client!(provider::BearerStatic, connector::BearerStaticSuccess);
+    let client = mock_client!(provider::BearerStatic, connector::BearerStatic);
     let token = client.request_token("code").unwrap();
     assert_eq!("aaaaaaaa", token.access_token());
     assert_eq!(Some("example"), token.scope());
@@ -68,7 +68,7 @@ fn request_token_bearer_static_success() {
 
 #[test]
 fn request_token_bearer_expiring_success() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccess);
+    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
     let token = client.request_token("code").unwrap();
     assert_eq!("aaaaaaaa", token.access_token());
     assert_eq!(Some("example"), token.scope());
@@ -80,7 +80,7 @@ fn request_token_bearer_expiring_success() {
 
 #[test]
 fn refresh_token_bearer_full() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccess);
+    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
     let token = client.request_token("code").unwrap();
     let token = client.refresh_token(token, None).unwrap();
     assert_eq!("cccccccc", token.access_token());
@@ -93,7 +93,7 @@ fn refresh_token_bearer_full() {
 
 #[test]
 fn refresh_token_bearer_partial() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccessPartial);
+    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringPartial);
     let token = client.request_token("code").unwrap();
     let token = client.refresh_token(token, None).unwrap();
     assert_eq!("cccccccc", token.access_token());
@@ -106,14 +106,14 @@ fn refresh_token_bearer_partial() {
 
 #[test]
 fn request_token_bearer_static_wrong_lifetime() {
-    let client = mock_client!(provider::BearerStatic, connector::BearerExpiringSuccess);
+    let client = mock_client!(provider::BearerStatic, connector::BearerExpiring);
     let err = client.request_token("code").unwrap_err();
     assert!(match err { ClientError::Parse(..) => true, _ => false });
 }
 
 #[test]
 fn request_token_bearer_expiring_wrong_lifetime() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerStaticSuccess);
+    let client = mock_client!(provider::BearerExpiring, connector::BearerStatic);
     let err = client.request_token("code").unwrap_err();
     assert!(match err { ClientError::Parse(..) => true, _ => false });
 }
