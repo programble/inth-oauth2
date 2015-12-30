@@ -21,7 +21,7 @@ pub trait FromResponse: Sized {
 }
 
 /// Response parse errors.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ParseError {
     /// Expected response to be of type.
     ExpectedType(&'static str),
@@ -56,7 +56,7 @@ impl Error for ParseError {
 }
 
 /// JSON helper for response parsing.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct JsonHelper<'a>(pub &'a Json);
 
 impl<'a> JsonHelper<'a> {
@@ -69,7 +69,7 @@ impl<'a> JsonHelper<'a> {
 }
 
 /// JSON object helper for response parsing.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct JsonObjectHelper<'a>(pub &'a json::Object);
 
 impl<'a> JsonObjectHelper<'a> {

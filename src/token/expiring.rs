@@ -6,7 +6,7 @@ use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
 
 /// An expiring token.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Expiring {
     refresh_token: String,
     expires: DateTime<UTC>,
