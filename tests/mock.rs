@@ -37,6 +37,12 @@ mod connector {
 
     mock_connector_in_order!(BearerExpiringSuccess {
         include_str!("response/request_token_bearer_expiring_success.http")
+        include_str!("response/refresh_token_bearer_full.http")
+    });
+
+    mock_connector_in_order!(BearerExpiringSuccessPartial {
+        include_str!("response/request_token_bearer_expiring_success.http")
+        include_str!("response/refresh_token_bearer_partial.http")
     });
 }
 
@@ -65,6 +71,32 @@ fn request_token_bearer_expiring_success() {
     let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccess);
     let token = client.request_token("code").unwrap();
     assert_eq!("aaaaaaaa", token.access_token());
+    assert_eq!(Some("example"), token.scope());
+    assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
+    assert_eq!(false, token.lifetime().expired());
+    assert!(token.lifetime().expires() > &UTC::now());
+    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+}
+
+#[test]
+fn refresh_token_bearer_full() {
+    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccess);
+    let token = client.request_token("code").unwrap();
+    let token = client.refresh_token(token, None).unwrap();
+    assert_eq!("cccccccc", token.access_token());
+    assert_eq!(Some("example"), token.scope());
+    assert_eq!("dddddddd", token.lifetime().refresh_token());
+    assert_eq!(false, token.lifetime().expired());
+    assert!(token.lifetime().expires() > &UTC::now());
+    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+}
+
+#[test]
+fn refresh_token_bearer_partial() {
+    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringSuccessPartial);
+    let token = client.request_token("code").unwrap();
+    let token = client.refresh_token(token, None).unwrap();
+    assert_eq!("cccccccc", token.access_token());
     assert_eq!(Some("example"), token.scope());
     assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
     assert_eq!(false, token.lifetime().expired());
