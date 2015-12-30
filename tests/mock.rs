@@ -6,6 +6,7 @@ extern crate yup_hyper_mock;
 
 use chrono::{UTC, Duration};
 use inth_oauth2::{Client, ClientError, Token, Lifetime};
+use inth_oauth2::error::OAuth2ErrorCode;
 
 mod provider {
     use inth_oauth2::token::{Bearer, Static, Expiring};
@@ -43,6 +44,15 @@ mod connector {
     mock_connector_in_order!(BearerExpiringPartial {
         include_str!("response/request_token_bearer_expiring.http")
         include_str!("response/refresh_token_bearer_partial.http")
+    });
+
+    mock_connector_in_order!(InvalidRequest {
+        include_str!("response/invalid_request.http")
+    });
+
+    mock_connector_in_order!(RefreshInvalidRequest {
+        include_str!("response/request_token_bearer_expiring.http")
+        include_str!("response/invalid_request.http")
     });
 }
 
@@ -116,4 +126,35 @@ fn request_token_bearer_expiring_wrong_lifetime() {
     let client = mock_client!(provider::BearerExpiring, connector::BearerStatic);
     let err = client.request_token("code").unwrap_err();
     assert!(match err { ClientError::Parse(..) => true, _ => false });
+}
+
+#[test]
+fn request_token_invalid_request() {
+    let client = mock_client!(provider::BearerStatic, connector::InvalidRequest);
+    let err = client.request_token("code").unwrap_err();
+    assert!(match err {
+        ClientError::OAuth2(err) => {
+            assert_eq!(OAuth2ErrorCode::InvalidRequest, err.code);
+            assert_eq!("example", err.description.unwrap());
+            assert_eq!("https://example.com/error", err.uri.unwrap());
+            true
+        },
+        _ => false,
+    });
+}
+
+#[test]
+fn refresh_token_invalid_request() {
+    let client = mock_client!(provider::BearerExpiring, connector::RefreshInvalidRequest);
+    let token = client.request_token("code").unwrap();
+    let err = client.refresh_token(token, None).unwrap_err();
+    assert!(match err {
+        ClientError::OAuth2(err) => {
+            assert_eq!(OAuth2ErrorCode::InvalidRequest, err.code);
+            assert_eq!("example", err.description.unwrap());
+            assert_eq!("https://example.com/error", err.uri.unwrap());
+            true
+        },
+        _ => false,
+    });
 }
