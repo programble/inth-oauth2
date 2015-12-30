@@ -5,7 +5,7 @@ extern crate inth_oauth2;
 extern crate yup_hyper_mock;
 
 use chrono::{UTC, Duration};
-use inth_oauth2::{Client, Token, Lifetime};
+use inth_oauth2::{Client, ClientError, Token, Lifetime};
 
 mod provider {
     use inth_oauth2::token::{Bearer, Static, Expiring};
@@ -102,4 +102,18 @@ fn refresh_token_bearer_partial() {
     assert_eq!(false, token.lifetime().expired());
     assert!(token.lifetime().expires() > &UTC::now());
     assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+}
+
+#[test]
+fn request_token_bearer_static_wrong_lifetime() {
+    let client = mock_client!(provider::BearerStatic, connector::BearerExpiringSuccess);
+    let err = client.request_token("code").unwrap_err();
+    assert!(match err { ClientError::Parse(..) => true, _ => false });
+}
+
+#[test]
+fn request_token_bearer_expiring_wrong_lifetime() {
+    let client = mock_client!(provider::BearerExpiring, connector::BearerStaticSuccess);
+    let err = client.request_token("code").unwrap_err();
+    assert!(match err { ClientError::Parse(..) => true, _ => false });
 }
