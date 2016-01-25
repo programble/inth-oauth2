@@ -154,6 +154,11 @@ impl<P: Provider> Client<P> {
             body_pairs.push(("redirect_uri", redirect_uri));
         }
 
+        if P::credentials_in_body() {
+            body_pairs.push(("client_id", &self.client_id));
+            body_pairs.push(("client_secret", &self.client_secret));
+        }
+
         let json = try!(self.post_token(body_pairs));
         let token = try!(P::Token::from_response(&json));
         Ok(token)

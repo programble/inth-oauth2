@@ -19,6 +19,13 @@ pub trait Provider {
     ///
     /// See [RFC 6749, section 3.2](http://tools.ietf.org/html/rfc6749#section-3.2).
     fn token_uri() -> &'static str;
+
+    /// Provider supports credentials via request body only.
+    /// Although not recommended by the RFC, some implementations accept client_id
+    /// and client_secret as a part of request only (most notable offender is vk.com).
+    ///
+    /// See [RFC 6749, section 2.3.1](http://tools.ietf.org/html/rfc6749#section-2.3.1).
+    fn credentials_in_body() -> bool { false }
 }
 
 /// Google OAuth 2.0 provider.
