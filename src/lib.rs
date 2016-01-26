@@ -139,6 +139,7 @@
 extern crate chrono;
 extern crate hyper;
 extern crate rustc_serialize;
+extern crate serde;
 extern crate url;
 
 pub use token::{Token, Lifetime};
