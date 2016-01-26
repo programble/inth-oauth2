@@ -149,3 +149,6 @@ pub mod token;
 pub mod provider;
 pub mod error;
 pub mod client;
+
+#[cfg(test)]
+extern crate serde_json;

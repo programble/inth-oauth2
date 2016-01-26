@@ -157,6 +157,7 @@ impl de::Visitor for FieldVisitor {
 mod tests {
     use chrono::{UTC, Duration};
     use rustc_serialize::json::Json;
+    use serde_json;
 
     use client::response::{FromResponse, ParseError};
     use token::{Static, Expiring};
@@ -257,5 +258,17 @@ mod tests {
         assert_eq!("bbbbbbbb", expiring.refresh_token());
         assert!(expiring.expires() > &UTC::now());
         assert!(expiring.expires() <= &(UTC::now() + Duration::seconds(3600)));
+    }
+
+    #[test]
+    fn serialize_deserialize() {
+        let original = Bearer {
+            access_token: String::from("foo"),
+            scope: Some(String::from("bar")),
+            lifetime: Static,
+        };
+        let serialized = serde_json::to_value(&original);
+        let deserialized = serde_json::from_value(serialized).unwrap();
+        assert_eq!(original, deserialized);
     }
 }

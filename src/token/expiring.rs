@@ -182,6 +182,7 @@ impl de::Visitor for FieldVisitor {
 mod tests {
     use chrono::{UTC, Duration, Timelike};
     use rustc_serialize::json::{self, Json};
+    use serde_json;
 
     use client::response::FromResponse;
     use super::Expiring;
@@ -217,5 +218,16 @@ mod tests {
         let json = json::encode(&expiring).unwrap();
         let decoded = json::decode(&json).unwrap();
         assert_eq!(expiring, decoded);
+    }
+
+    #[test]
+    fn serialize_deserialize() {
+        let original = Expiring {
+            refresh_token: String::from("foo"),
+            expires: UTC::now().with_nanosecond(0).unwrap(),
+        };
+        let serialized = serde_json::to_value(&original);
+        let deserialized = serde_json::from_value(serialized).unwrap();
+        assert_eq!(original, deserialized);
     }
 }

@@ -39,6 +39,7 @@ impl Deserialize for Static {
 #[cfg(test)]
 mod tests {
     use rustc_serialize::json::Json;
+    use serde_json;
 
     use client::response::{FromResponse, ParseError};
     use super::Static;
@@ -56,5 +57,13 @@ mod tests {
             ParseError::UnexpectedField("expires_in"),
             Static::from_response(&json).unwrap_err()
         );
+    }
+
+    #[test]
+    fn serialize_deserialize() {
+        let original = Static;
+        let serialized = serde_json::to_value(&original);
+        let deserialized = serde_json::from_value(serialized).unwrap();
+        assert_eq!(original, deserialized);
     }
 }
