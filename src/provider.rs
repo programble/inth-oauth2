@@ -13,18 +13,25 @@ pub trait Provider {
     /// The authorization endpoint URI.
     ///
     /// See [RFC 6749, section 3.1](http://tools.ietf.org/html/rfc6749#section-3.1).
+    ///
+    /// Note: likely to become an associated constant.
     fn auth_uri() -> &'static str;
 
     /// The token endpoint URI.
     ///
     /// See [RFC 6749, section 3.2](http://tools.ietf.org/html/rfc6749#section-3.2).
+    ///
+    /// Note: likely to become an associated constant.
     fn token_uri() -> &'static str;
 
-    /// Provider supports credentials via request body only.
-    /// Although not recommended by the RFC, some implementations accept client_id
-    /// and client_secret as a part of request only (most notable offender is vk.com).
+    /// Provider requires credentials via request body.
+    ///
+    /// Although not recommended by the RFC, some providers require `client_id` and `client_secret`
+    /// as part of the request body.
     ///
     /// See [RFC 6749, section 2.3.1](http://tools.ietf.org/html/rfc6749#section-2.3.1).
+    ///
+    /// Note: likely to become an associated constant.
     fn credentials_in_body() -> bool { false }
 }
 
