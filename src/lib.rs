@@ -108,7 +108,8 @@
 //!
 //! ### Persisting tokens
 //!
-//! All token types implement `Encodable` and `Decodable` from `rustc_serialize`.
+//! All token types implement `Encodable` / `Decodable` from `rustc_serialize` and `Serialize` /
+//! `Deserialize` from `serde`.
 //!
 //! ```no_run
 //! # extern crate inth_oauth2;
@@ -120,6 +121,18 @@
 //! # let client = Client::<Google>::new(Default::default(), "", "", None);
 //! # let token = client.request_token("").unwrap();
 //! let json = json::encode(&token).unwrap();
+//! # }
+//! ```
+//!
+//! ```no_run
+//! # extern crate inth_oauth2;
+//! extern crate serde_json;
+//! # use inth_oauth2::Client;
+//! # use inth_oauth2::provider::Google;
+//! # fn main() {
+//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! # let token = client.request_token("").unwrap();
+//! let json = serde_json::to_string(&token).unwrap();
 //! # }
 //! ```
 
