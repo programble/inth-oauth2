@@ -1,4 +1,6 @@
 use rustc_serialize::json::Json;
+use serde::{Serialize, Serializer, Deserialize, Deserializer};
+use serde::de::impls::UnitVisitor;
 
 use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
@@ -21,9 +23,23 @@ impl FromResponse for Static {
     }
 }
 
+impl Serialize for Static {
+    fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
+        serializer.visit_unit_struct("Static")
+    }
+}
+
+impl Deserialize for Static {
+    fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
+        deserializer.visit_unit_struct("Static", UnitVisitor)
+            .and(Ok(Static))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use rustc_serialize::json::Json;
+    use serde_json;
 
     use client::response::{FromResponse, ParseError};
     use super::Static;
@@ -41,5 +57,13 @@ mod tests {
             ParseError::UnexpectedField("expires_in"),
             Static::from_response(&json).unwrap_err()
         );
+    }
+
+    #[test]
+    fn serialize_deserialize() {
+        let original = Static;
+        let serialized = serde_json::to_value(&original);
+        let deserialized = serde_json::from_value(serialized).unwrap();
+        assert_eq!(original, deserialized);
     }
 }
