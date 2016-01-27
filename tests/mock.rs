@@ -61,8 +61,7 @@ macro_rules! mock_client {
         Client::<$p>::new(
             hyper::Client::with_connector(<$c>::default()),
             "client_id",
-            "client_secret",
-            None
+            "client_secret"
         )
     }
 }
