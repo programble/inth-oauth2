@@ -52,12 +52,16 @@ impl<P: Provider> Client<P> {
     ///     Some("urn:ietf:wg:oauth:2.0:oob")
     /// );
     /// ```
-    pub fn new<S>(
+    pub fn new<C, S, R>(
         http_client: hyper::Client,
-        client_id: S,
+        client_id: C,
         client_secret: S,
-        redirect_uri: Option<S>
-    ) -> Self where S: Into<String> {
+        redirect_uri: Option<R>
+    ) -> Self where
+            C: Into<String>,
+            S: Into<String>,
+            R: Into<String> {
+
         Client {
             http_client: http_client,
             client_id: client_id.into(),
