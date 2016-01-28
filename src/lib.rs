@@ -33,7 +33,6 @@
 //! use inth_oauth2::provider::Google;
 //!
 //! let client = Client::<Google>::new(
-//!     Default::default(),
 //!     "client_id",
 //!     "client_secret",
 //!     Some("redirect_uri")
@@ -45,7 +44,7 @@
 //! ```
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! # let client = Client::<Google>::new("", "", None);
 //! let auth_uri = client.auth_uri(Some("scope"), Some("state")).unwrap();
 //! println!("Authorize the application by clicking on the link: {}", auth_uri);
 //! ```
@@ -56,12 +55,13 @@
 //! use std::io;
 //! use inth_oauth2::{Client, Token};
 //! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
+//! # let client = Client::<Google>::new("", "", None);
 //!
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
 //!
-//! let token = client.request_token(code.trim()).unwrap();
+//! let http_client = Default::default();
+//! let token = client.request_token(&http_client, code.trim()).unwrap();
 //! println!("{}", token.access_token());
 //! ```
 //!
@@ -70,9 +70,10 @@
 //! ```no_run
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
-//! # let token = client.request_token("").unwrap();
-//! let token = client.refresh_token(token, None).unwrap();
+//! # let client = Client::<Google>::new("", "", None);
+//! # let http_client = Default::default();
+//! # let token = client.request_token(&http_client, "").unwrap();
+//! let token = client.refresh_token(&http_client, token, None).unwrap();
 //! ```
 //!
 //! ### Ensuring an access token is still valid
@@ -80,10 +81,11 @@
 //! ```no_run
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
-//! # let mut token = client.request_token("").unwrap();
+//! # let client = Client::<Google>::new("", "", None);
+//! # let http_client = Default::default();
+//! # let mut token = client.request_token(&http_client, "").unwrap();
 //! // Refresh token only if it has expired.
-//! token = client.ensure_token(token).unwrap();
+//! token = client.ensure_token(&http_client, token).unwrap();
 //! ```
 //!
 //! ### Using bearer access tokens
@@ -98,9 +100,9 @@
 //! use hyper::header::Authorization;
 //!
 //! # fn main() {
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
-//! # let token = client.request_token("").unwrap();
 //! let client = hyper::Client::new();
+//! # let oauth_client = Client::<Google>::new("", "", None);
+//! # let token = oauth_client.request_token(&client, "").unwrap();
 //! let request = client.get("https://example.com/resource")
 //!     .header(Into::<Authorization<_>>::into(&token));
 //! # }
@@ -118,8 +120,9 @@
 //! # use inth_oauth2::provider::Google;
 //! use rustc_serialize::json;
 //! # fn main() {
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
-//! # let token = client.request_token("").unwrap();
+//! # let http_client = Default::default();
+//! # let client = Client::<Google>::new("", "", None);
+//! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = json::encode(&token).unwrap();
 //! # }
 //! ```
@@ -130,8 +133,9 @@
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::Google;
 //! # fn main() {
-//! # let client = Client::<Google>::new(Default::default(), "", "", None);
-//! # let token = client.request_token("").unwrap();
+//! # let http_client = Default::default();
+//! # let client = Client::<Google>::new("", "", None);
+//! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
 //! # }
 //! ```

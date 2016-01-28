@@ -19,7 +19,6 @@ mod error;
 
 /// OAuth 2.0 client.
 pub struct Client<P: Provider> {
-    http_client: hyper::Client,
     client_id: String,
     client_secret: String,
     redirect_uri: Option<String>,
@@ -46,20 +45,17 @@ impl<P: Provider> Client<P> {
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
-    ///     Default::default(),
     ///     "CLIENT_ID",
     ///     "CLIENT_SECRET",
     ///     Some("urn:ietf:wg:oauth:2.0:oob")
     /// );
     /// ```
     pub fn new<S>(
-        http_client: hyper::Client,
         client_id: S,
         client_secret: S,
         redirect_uri: Option<S>
     ) -> Self where S: Into<String> {
         Client {
-            http_client: http_client,
             client_id: client_id.into(),
             client_secret: client_secret.into(),
             redirect_uri: redirect_uri.map(Into::into),
@@ -78,7 +74,6 @@ impl<P: Provider> Client<P> {
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
-    ///     Default::default(),
     ///     "CLIENT_ID",
     ///     "CLIENT_SECRET",
     ///     Some("urn:ietf:wg:oauth:2.0:oob")
@@ -112,7 +107,7 @@ impl<P: Provider> Client<P> {
         Ok(uri.serialize())
     }
 
-    fn post_token(&self, body_pairs: Vec<(&str, &str)>) -> Result<Json, ClientError> {
+    fn post_token(&self, http_client: &hyper::Client, body_pairs: Vec<(&str, &str)>) -> Result<Json, ClientError> {
         let body = form_urlencoded::serialize(body_pairs);
         let auth_header = header::Authorization(
             header::Basic {
@@ -124,7 +119,7 @@ impl<P: Provider> Client<P> {
             header::qitem(mime::Mime(mime::TopLevel::Application, mime::SubLevel::Json, vec![])),
         ]);
 
-        let request = self.http_client.post(P::token_uri())
+        let request = http_client.post(P::token_uri())
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
@@ -145,7 +140,7 @@ impl<P: Provider> Client<P> {
     /// Requests an access token using an authorization code.
     ///
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
-    pub fn request_token(&self, code: &str) -> Result<P::Token, ClientError> {
+    pub fn request_token(&self, http_client: &hyper::Client, code: &str) -> Result<P::Token, ClientError> {
         let mut body_pairs = vec![
             ("grant_type", "authorization_code"),
             ("code", code),
@@ -159,7 +154,7 @@ impl<P: Provider> Client<P> {
             body_pairs.push(("client_secret", &self.client_secret));
         }
 
-        let json = try!(self.post_token(body_pairs));
+        let json = try!(self.post_token(http_client, body_pairs));
         let token = try!(P::Token::from_response(&json));
         Ok(token)
     }
@@ -171,6 +166,7 @@ impl<P: Provider> Client<P> where P::Token: Token<Expiring> {
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
     pub fn refresh_token(
         &self,
+        http_client: &hyper::Client,
         token: P::Token,
         scope: Option<&str>
     ) -> Result<P::Token, ClientError> {
@@ -182,15 +178,15 @@ impl<P: Provider> Client<P> where P::Token: Token<Expiring> {
             body_pairs.push(("scope", scope));
         }
 
-        let json = try!(self.post_token(body_pairs));
+        let json = try!(self.post_token(http_client, body_pairs));
         let token = try!(P::Token::from_response_inherit(&json, &token));
         Ok(token)
     }
 
     /// Ensures an access token is valid by refreshing it if necessary.
-    pub fn ensure_token(&self, token: P::Token) -> Result<P::Token, ClientError> {
+    pub fn ensure_token(&self, http_client: &hyper::Client, token: P::Token) -> Result<P::Token, ClientError> {
         if token.lifetime().expired() {
-            self.refresh_token(token, None)
+            self.refresh_token(http_client, token, None)
         } else {
             Ok(token)
         }
@@ -213,7 +209,7 @@ mod tests {
 
     #[test]
     fn auth_uri() {
-        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        let client = Client::<Test>::new("foo", "bar", None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
             client.auth_uri(None, None).unwrap()
@@ -223,7 +219,6 @@ mod tests {
     #[test]
     fn auth_uri_with_redirect_uri() {
         let client = Client::<Test>::new(
-            Default::default(),
             "foo",
             "bar",
             Some("http://example.com/oauth2/callback")
@@ -236,7 +231,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_scope() {
-        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        let client = Client::<Test>::new("foo", "bar", None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
             client.auth_uri(Some("baz"), None).unwrap()
@@ -245,7 +240,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_state() {
-        let client = Client::<Test>::new(Default::default(), "foo", "bar", None);
+        let client = Client::<Test>::new("foo", "bar", None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
             client.auth_uri(None, Some("baz")).unwrap()

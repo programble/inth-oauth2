@@ -13,7 +13,6 @@ fn assert_get_uri_ok(uri: &str) {
 #[test]
 fn google_auth_uri_ok() {
     let client = Client::<Google>::new(
-        Default::default(),
         "143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com",
         "",
         Some("urn:ietf:wg:oauth:2.0:oob")
@@ -28,7 +27,6 @@ fn google_auth_uri_ok() {
 #[test]
 fn github_auth_uri_ok() {
     let client = Client::<GitHub>::new(
-        Default::default(),
         "01774654cd9a6051e478",
         "",
         Some("https://cmcenroe.me/oauth2-paste/")
@@ -40,7 +38,6 @@ fn github_auth_uri_ok() {
 #[test]
 fn imgur_auth_uri_ok() {
     let client = Client::<Imgur>::new(
-        Default::default(),
         "505c8ca804230e0",
         "",
         Some("https://cmcenroe.me/oauth2-paste/")
