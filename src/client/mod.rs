@@ -112,7 +112,12 @@ impl<P: Provider> Client<P> {
         Ok(uri.serialize())
     }
 
-    fn post_token(&self, body_pairs: Vec<(&str, &str)>) -> Result<Json, ClientError> {
+    fn post_token<'a>(&'a self, mut body_pairs: Vec<(&str, &'a str)>) -> Result<Json, ClientError> {
+        if P::credentials_in_body() {
+            body_pairs.push(("client_id", &self.client_id));
+            body_pairs.push(("client_secret", &self.client_secret));
+        }
+
         let body = form_urlencoded::serialize(body_pairs);
         let auth_header = header::Authorization(
             header::Basic {
@@ -152,11 +157,6 @@ impl<P: Provider> Client<P> {
         ];
         if let Some(ref redirect_uri) = self.redirect_uri {
             body_pairs.push(("redirect_uri", redirect_uri));
-        }
-
-        if P::credentials_in_body() {
-            body_pairs.push(("client_id", &self.client_id));
-            body_pairs.push(("client_secret", &self.client_secret));
         }
 
         let json = try!(self.post_token(body_pairs));
