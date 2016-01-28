@@ -58,28 +58,28 @@ mod connector {
 
 macro_rules! mock_client {
     ($p:ty, $c:ty) => {
-        Client::<$p>::new(
-            hyper::Client::with_connector(<$c>::default()),
+        (Client::<$p>::new(
             "client_id",
             "client_secret",
             None
-        )
+        ),
+        hyper::Client::with_connector(<$c>::default()))
     }
 }
 
 
 #[test]
 fn request_token_bearer_static_success() {
-    let client = mock_client!(provider::BearerStatic, connector::BearerStatic);
-    let token = client.request_token("code").unwrap();
+    let (client, http_client) = mock_client!(provider::BearerStatic, connector::BearerStatic);
+    let token = client.request_token(&http_client, "code").unwrap();
     assert_eq!("aaaaaaaa", token.access_token());
     assert_eq!(Some("example"), token.scope());
 }
 
 #[test]
 fn request_token_bearer_expiring_success() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
-    let token = client.request_token("code").unwrap();
+    let (client, http_client) = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
+    let token = client.request_token(&http_client, "code").unwrap();
     assert_eq!("aaaaaaaa", token.access_token());
     assert_eq!(Some("example"), token.scope());
     assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
@@ -90,9 +90,9 @@ fn request_token_bearer_expiring_success() {
 
 #[test]
 fn refresh_token_bearer_full() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
-    let token = client.request_token("code").unwrap();
-    let token = client.refresh_token(token, None).unwrap();
+    let (client, http_client) = mock_client!(provider::BearerExpiring, connector::BearerExpiring);
+    let token = client.request_token(&http_client, "code").unwrap();
+    let token = client.refresh_token(&http_client, token, None).unwrap();
     assert_eq!("cccccccc", token.access_token());
     assert_eq!(Some("example"), token.scope());
     assert_eq!("dddddddd", token.lifetime().refresh_token());
@@ -103,9 +103,9 @@ fn refresh_token_bearer_full() {
 
 #[test]
 fn refresh_token_bearer_partial() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerExpiringPartial);
-    let token = client.request_token("code").unwrap();
-    let token = client.refresh_token(token, None).unwrap();
+    let (client, http_client) = mock_client!(provider::BearerExpiring, connector::BearerExpiringPartial);
+    let token = client.request_token(&http_client, "code").unwrap();
+    let token = client.refresh_token(&http_client, token, None).unwrap();
     assert_eq!("cccccccc", token.access_token());
     assert_eq!(Some("example"), token.scope());
     assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
@@ -116,22 +116,22 @@ fn refresh_token_bearer_partial() {
 
 #[test]
 fn request_token_bearer_static_wrong_lifetime() {
-    let client = mock_client!(provider::BearerStatic, connector::BearerExpiring);
-    let err = client.request_token("code").unwrap_err();
+    let (client, http_client) = mock_client!(provider::BearerStatic, connector::BearerExpiring);
+    let err = client.request_token(&http_client, "code").unwrap_err();
     assert!(match err { ClientError::Parse(..) => true, _ => false });
 }
 
 #[test]
 fn request_token_bearer_expiring_wrong_lifetime() {
-    let client = mock_client!(provider::BearerExpiring, connector::BearerStatic);
-    let err = client.request_token("code").unwrap_err();
+    let (client, http_client) = mock_client!(provider::BearerExpiring, connector::BearerStatic);
+    let err = client.request_token(&http_client, "code").unwrap_err();
     assert!(match err { ClientError::Parse(..) => true, _ => false });
 }
 
 #[test]
 fn request_token_invalid_request() {
-    let client = mock_client!(provider::BearerStatic, connector::InvalidRequest);
-    let err = client.request_token("code").unwrap_err();
+    let (client, http_client) = mock_client!(provider::BearerStatic, connector::InvalidRequest);
+    let err = client.request_token(&http_client, "code").unwrap_err();
     assert!(match err {
         ClientError::OAuth2(err) => {
             assert_eq!(OAuth2ErrorCode::InvalidRequest, err.code);
@@ -145,9 +145,9 @@ fn request_token_invalid_request() {
 
 #[test]
 fn refresh_token_invalid_request() {
-    let client = mock_client!(provider::BearerExpiring, connector::RefreshInvalidRequest);
-    let token = client.request_token("code").unwrap();
-    let err = client.refresh_token(token, None).unwrap_err();
+    let (client, http_client) = mock_client!(provider::BearerExpiring, connector::RefreshInvalidRequest);
+    let token = client.request_token(&http_client, "code").unwrap();
+    let err = client.refresh_token(&http_client, token, None).unwrap_err();
     assert!(match err {
         ClientError::OAuth2(err) => {
             assert_eq!(OAuth2ErrorCode::InvalidRequest, err.code);
