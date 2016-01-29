@@ -1,6 +1,5 @@
 //! Client.
 
-use std::fmt;
 use std::marker::PhantomData;
 
 use hyper::{self, header, mime};
@@ -18,21 +17,12 @@ pub use self::error::ClientError;
 mod error;
 
 /// OAuth 2.0 client.
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Client<P: Provider> {
     client_id: String,
     client_secret: String,
     redirect_uri: Option<String>,
     provider: PhantomData<P>,
-}
-
-impl<P: Provider> fmt::Debug for Client<P> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        f.debug_struct("Client")
-            .field("client_id", &self.client_id)
-            .field("client_secret", &self.client_secret)
-            .field("redirect_uri", &self.redirect_uri)
-            .finish()
-    }
 }
 
 impl<P: Provider> Client<P> {
