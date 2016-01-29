@@ -59,8 +59,8 @@ mod connector {
 macro_rules! mock_client {
     ($p:ty, $c:ty) => {
         (Client::<$p>::new(
-            "client_id",
-            "client_secret",
+            String::from("client_id"),
+            String::from("client_secret"),
             None
         ),
         hyper::Client::with_connector(<$c>::default()))

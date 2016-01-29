@@ -7,9 +7,9 @@ use inth_oauth2::provider::Google;
 
 fn main() {
     let client = Client::<Google>::new(
-        "143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com",
-        "3kZ5WomzHFlN2f_XbhkyPd3o",
-        Some("urn:ietf:wg:oauth:2.0:oob")
+        String::from("143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com"),
+        String::from("3kZ5WomzHFlN2f_XbhkyPd3o"),
+        Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
     );
 
     let auth_uri = client.auth_uri(Some("https://www.googleapis.com/auth/userinfo.email"), None)

@@ -41,20 +41,16 @@ impl<P: Provider> Client<P> {
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
-    ///     "CLIENT_ID",
-    ///     "CLIENT_SECRET",
-    ///     Some("urn:ietf:wg:oauth:2.0:oob")
+    ///     String::from("CLIENT_ID"),
+    ///     String::from("CLIENT_SECRET"),
+    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
     /// );
     /// ```
-    pub fn new<S>(
-        client_id: S,
-        client_secret: S,
-        redirect_uri: Option<S>
-    ) -> Self where S: Into<String> {
+    pub fn new(client_id: String, client_secret: String, redirect_uri: Option<String>) -> Self {
         Client {
-            client_id: client_id.into(),
-            client_secret: client_secret.into(),
-            redirect_uri: redirect_uri.map(Into::into),
+            client_id: client_id,
+            client_secret: client_secret,
+            redirect_uri: redirect_uri,
             provider: PhantomData,
         }
     }
@@ -70,9 +66,9 @@ impl<P: Provider> Client<P> {
     /// use inth_oauth2::provider::Google;
     ///
     /// let client = Client::<Google>::new(
-    ///     "CLIENT_ID",
-    ///     "CLIENT_SECRET",
-    ///     Some("urn:ietf:wg:oauth:2.0:oob")
+    ///     String::from("CLIENT_ID"),
+    ///     String::from("CLIENT_SECRET"),
+    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
     /// );
     ///
     /// let auth_uri = client.auth_uri(
@@ -210,7 +206,7 @@ mod tests {
 
     #[test]
     fn auth_uri() {
-        let client = Client::<Test>::new("foo", "bar", None);
+        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
             client.auth_uri(None, None).unwrap()
@@ -220,9 +216,9 @@ mod tests {
     #[test]
     fn auth_uri_with_redirect_uri() {
         let client = Client::<Test>::new(
-            "foo",
-            "bar",
-            Some("http://example.com/oauth2/callback")
+            String::from("foo"),
+            String::from("bar"),
+            Some(String::from("http://example.com/oauth2/callback"))
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
@@ -232,7 +228,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_scope() {
-        let client = Client::<Test>::new("foo", "bar", None);
+        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
             client.auth_uri(Some("baz"), None).unwrap()
@@ -241,7 +237,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_state() {
-        let client = Client::<Test>::new("foo", "bar", None);
+        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
             client.auth_uri(None, Some("baz")).unwrap()

@@ -7,9 +7,9 @@ use inth_oauth2::provider::GitHub;
 
 fn main() {
     let client = Client::<GitHub>::new(
-        "01774654cd9a6051e478",
-        "9f14d16d95d605e715ec1a9aecec220d2565fd5c",
-        Some("https://cmcenroe.me/oauth2-paste/")
+        String::from("01774654cd9a6051e478"),
+        String::from("9f14d16d95d605e715ec1a9aecec220d2565fd5c"),
+        Some(String::from("https://cmcenroe.me/oauth2-paste/"))
     );
 
     let auth_uri = client.auth_uri(Some("user"), None).unwrap();
