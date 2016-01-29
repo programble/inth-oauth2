@@ -19,9 +19,15 @@ mod error;
 /// OAuth 2.0 client.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Client<P: Provider> {
-    client_id: String,
-    client_secret: String,
-    redirect_uri: Option<String>,
+    /// Client ID.
+    pub client_id: String,
+
+    /// Client secret.
+    pub client_secret: String,
+
+    /// Redirect URI.
+    pub redirect_uri: Option<String>,
+
     provider: PhantomData<P>,
 }
 
