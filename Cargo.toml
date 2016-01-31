@@ -1,6 +1,6 @@
 [package]
 name = "inth-oauth2"
-version = "0.6.0"
+version = "0.7.0"
 
 description = "OAuth2 client"
 keywords = ["authentication", "authorization", "auth", "oauth"]
