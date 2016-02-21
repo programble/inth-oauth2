@@ -14,6 +14,7 @@
 //! Support for the following OAuth 2.0 providers is included:
 //!
 //! - Google
+//!   - Installed
 //! - GitHub
 //! - Imgur
 //!
@@ -30,9 +31,9 @@
 //!
 //! ```
 //! use inth_oauth2::Client;
-//! use inth_oauth2::provider::Google;
+//! use inth_oauth2::provider::google::Installed;
 //!
-//! let client = Client::<Google>::new(
+//! let client = Client::<Installed>::new(
 //!     String::from("client_id"),
 //!     String::from("client_secret"),
 //!     Some(String::from("redirect_uri"))
@@ -43,8 +44,8 @@
 //!
 //! ```
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # use inth_oauth2::provider::google::Installed;
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! let auth_uri = client.auth_uri(Some("scope"), Some("state")).unwrap();
 //! println!("Authorize the application by clicking on the link: {}", auth_uri);
 //! ```
@@ -54,8 +55,8 @@
 //! ```no_run
 //! use std::io;
 //! use inth_oauth2::{Client, Token};
-//! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # use inth_oauth2::provider::google::Installed;
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //!
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
@@ -69,8 +70,8 @@
 //!
 //! ```no_run
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # use inth_oauth2::provider::google::Installed;
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let http_client = Default::default();
 //! # let token = client.request_token(&http_client, "").unwrap();
 //! let token = client.refresh_token(&http_client, token, None).unwrap();
@@ -80,8 +81,8 @@
 //!
 //! ```no_run
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # use inth_oauth2::provider::google::Installed;
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let http_client = Default::default();
 //! # let mut token = client.request_token(&http_client, "").unwrap();
 //! // Refresh token only if it has expired.
@@ -96,12 +97,12 @@
 //! # extern crate hyper;
 //! # extern crate inth_oauth2;
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
+//! # use inth_oauth2::provider::google::Installed;
 //! use hyper::header::Authorization;
 //!
 //! # fn main() {
 //! let client = hyper::Client::new();
-//! # let oauth_client = Client::<Google>::new(String::new(), String::new(), None);
+//! # let oauth_client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let token = oauth_client.request_token(&client, "").unwrap();
 //! let request = client.get("https://example.com/resource")
 //!     .header(Into::<Authorization<_>>::into(&token));
@@ -117,11 +118,11 @@
 //! # extern crate inth_oauth2;
 //! # extern crate rustc_serialize;
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
+//! # use inth_oauth2::provider::google::Installed;
 //! use rustc_serialize::json;
 //! # fn main() {
 //! # let http_client = Default::default();
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = json::encode(&token).unwrap();
 //! # }
@@ -131,10 +132,10 @@
 //! # extern crate inth_oauth2;
 //! extern crate serde_json;
 //! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::Google;
+//! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
 //! # let http_client = Default::default();
-//! # let client = Client::<Google>::new(String::new(), String::new(), None);
+//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
 //! # }

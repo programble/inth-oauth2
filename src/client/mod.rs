@@ -38,9 +38,9 @@ impl<P: Provider> Client<P> {
     ///
     /// ```
     /// use inth_oauth2::Client;
-    /// use inth_oauth2::provider::Google;
+    /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Google>::new(
+    /// let client = Client::<Installed>::new(
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
     ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
@@ -63,9 +63,9 @@ impl<P: Provider> Client<P> {
     ///
     /// ```
     /// use inth_oauth2::Client;
-    /// use inth_oauth2::provider::Google;
+    /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Google>::new(
+    /// let client = Client::<Installed>::new(
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
     ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
