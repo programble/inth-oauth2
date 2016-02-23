@@ -7,14 +7,14 @@ use serde::{ser, de};
 use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
 
-/// An expiring token.
+/// An expiring token which can be refreshed.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Expiring {
+pub struct Refresh {
     refresh_token: String,
     expires: DateTime<UTC>,
 }
 
-impl Expiring {
+impl Refresh {
     /// Returns the refresh token.
     ///
     /// See [RFC 6749, section 1.5](http://tools.ietf.org/html/rfc6749#section-1.5).
@@ -24,18 +24,18 @@ impl Expiring {
     pub fn expires(&self) -> &DateTime<UTC> { &self.expires }
 }
 
-impl Lifetime for Expiring {
+impl Lifetime for Refresh {
     fn expired(&self) -> bool { self.expires < UTC::now() }
 }
 
-impl FromResponse for Expiring {
+impl FromResponse for Refresh {
     fn from_response(json: &Json) -> Result<Self, ParseError> {
         let obj = try!(JsonHelper(json).as_object());
 
         let refresh_token = try!(obj.get_string("refresh_token"));
         let expires_in = try!(obj.get_i64("expires_in"));
 
-        Ok(Expiring {
+        Ok(Refresh {
             refresh_token: refresh_token.into(),
             expires: UTC::now() + Duration::seconds(expires_in),
         })
@@ -50,7 +50,7 @@ impl FromResponse for Expiring {
         };
         let expires_in = try!(obj.get_i64("expires_in"));
 
-        Ok(Expiring {
+        Ok(Refresh {
             refresh_token: refresh_token.into(),
             expires: UTC::now() + Duration::seconds(expires_in),
         })
@@ -63,43 +63,43 @@ struct Serializable {
     expires: i64,
 }
 
-impl<'a> From<&'a Expiring> for Serializable {
-    fn from(expiring: &Expiring) -> Self {
+impl<'a> From<&'a Refresh> for Serializable {
+    fn from(refresh: &Refresh) -> Self {
         Serializable {
-            refresh_token: expiring.refresh_token.clone(),
-            expires: expiring.expires.timestamp(),
+            refresh_token: refresh.refresh_token.clone(),
+            expires: refresh.expires.timestamp(),
         }
     }
 }
 
-impl Into<Expiring> for Serializable {
-    fn into(self) -> Expiring {
-        Expiring {
+impl Into<Refresh> for Serializable {
+    fn into(self) -> Refresh {
+        Refresh {
             refresh_token: self.refresh_token,
             expires: UTC.timestamp(self.expires, 0),
         }
     }
 }
 
-impl Encodable for Expiring {
+impl Encodable for Refresh {
     fn encode<S: Encoder>(&self, s: &mut S) -> Result<(), S::Error> {
         Serializable::from(self).encode(s)
     }
 }
 
-impl Decodable for Expiring {
+impl Decodable for Refresh {
     fn decode<D: Decoder>(d: &mut D) -> Result<Self, D::Error> {
         Serializable::decode(d).map(Into::into)
     }
 }
 
-impl Serialize for Expiring {
+impl Serialize for Refresh {
     fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.serialize_struct("Expiring", SerVisitor(self, 0))
+        serializer.serialize_struct("Refresh", SerVisitor(self, 0))
     }
 }
 
-struct SerVisitor<'a>(&'a Expiring, u8);
+struct SerVisitor<'a>(&'a Refresh, u8);
 impl<'a> ser::MapVisitor for SerVisitor<'a> {
     fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
         self.1 += 1;
@@ -113,18 +113,18 @@ impl<'a> ser::MapVisitor for SerVisitor<'a> {
     fn len(&self) -> Option<usize> { Some(2) }
 }
 
-impl Deserialize for Expiring {
+impl Deserialize for Refresh {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
         static FIELDS: &'static [&'static str] = &["refresh_token", "expires"];
-        deserializer.deserialize_struct("Expiring", FIELDS, DeVisitor)
+        deserializer.deserialize_struct("Refresh", FIELDS, DeVisitor)
     }
 }
 
 struct DeVisitor;
 impl de::Visitor for DeVisitor {
-    type Value = Expiring;
+    type Value = Refresh;
 
-    fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Expiring, V::Error> {
+    fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Refresh, V::Error> {
         let mut refresh_token = None;
         let mut expires = None;
 
@@ -147,7 +147,7 @@ impl de::Visitor for DeVisitor {
 
         try!(visitor.end());
 
-        Ok(Expiring {
+        Ok(Refresh {
             refresh_token: refresh_token,
             expires: expires,
         })
@@ -185,44 +185,44 @@ mod tests {
     use serde_json;
 
     use client::response::FromResponse;
-    use super::Expiring;
+    use super::Refresh;
 
     #[test]
     fn from_response() {
         let json = Json::from_str(r#"{"refresh_token":"aaaaaaaa","expires_in":3600}"#).unwrap();
-        let expiring = Expiring::from_response(&json).unwrap();
-        assert_eq!("aaaaaaaa", expiring.refresh_token);
-        assert!(expiring.expires > UTC::now());
-        assert!(expiring.expires <= UTC::now() + Duration::seconds(3600));
+        let refresh = Refresh::from_response(&json).unwrap();
+        assert_eq!("aaaaaaaa", refresh.refresh_token);
+        assert!(refresh.expires > UTC::now());
+        assert!(refresh.expires <= UTC::now() + Duration::seconds(3600));
     }
 
     #[test]
     fn from_response_inherit() {
         let json = Json::from_str(r#"{"expires_in":3600}"#).unwrap();
-        let prev = Expiring {
+        let prev = Refresh {
             refresh_token: String::from("aaaaaaaa"),
             expires: UTC::now(),
         };
-        let expiring = Expiring::from_response_inherit(&json, &prev).unwrap();
-        assert_eq!("aaaaaaaa", expiring.refresh_token);
-        assert!(expiring.expires > UTC::now());
-        assert!(expiring.expires <= UTC::now() + Duration::seconds(3600));
+        let refresh = Refresh::from_response_inherit(&json, &prev).unwrap();
+        assert_eq!("aaaaaaaa", refresh.refresh_token);
+        assert!(refresh.expires > UTC::now());
+        assert!(refresh.expires <= UTC::now() + Duration::seconds(3600));
     }
 
     #[test]
     fn encode_decode() {
-        let expiring = Expiring {
+        let refresh = Refresh {
             refresh_token: String::from("foo"),
             expires: UTC::now().with_nanosecond(0).unwrap(),
         };
-        let json = json::encode(&expiring).unwrap();
+        let json = json::encode(&refresh).unwrap();
         let decoded = json::decode(&json).unwrap();
-        assert_eq!(expiring, decoded);
+        assert_eq!(refresh, decoded);
     }
 
     #[test]
     fn serialize_deserialize() {
-        let original = Expiring {
+        let original = Refresh {
             refresh_token: String::from("foo"),
             expires: UTC::now().with_nanosecond(0).unwrap(),
         };

@@ -1,6 +1,6 @@
 //! Providers.
 
-use token::{Token, Lifetime, Bearer, Static, Expiring};
+use token::{Token, Lifetime, Bearer, Static, Refresh};
 
 /// OAuth 2.0 providers.
 pub trait Provider {
@@ -40,7 +40,7 @@ pub trait Provider {
 /// See [Using OAuth 2.0 to Access Google
 /// APIs](https://developers.google.com/identity/protocols/OAuth2).
 pub mod google {
-    use token::{Bearer, Expiring};
+    use token::{Bearer, Refresh};
     use super::Provider;
 
     /// Google OAuth 2.0 provider for installed applications.
@@ -50,8 +50,8 @@ pub mod google {
     #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Installed;
     impl Provider for Installed {
-        type Lifetime = Expiring;
-        type Token = Bearer<Expiring>;
+        type Lifetime = Refresh;
+        type Token = Bearer<Refresh>;
         fn auth_uri() -> &'static str { "https://accounts.google.com/o/oauth2/v2/auth" }
         fn token_uri() -> &'static str { "https://www.googleapis.com/oauth2/v4/token" }
     }
@@ -75,8 +75,8 @@ impl Provider for GitHub {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Imgur;
 impl Provider for Imgur {
-    type Lifetime = Expiring;
-    type Token = Bearer<Expiring>;
+    type Lifetime = Refresh;
+    type Token = Bearer<Refresh>;
     fn auth_uri() -> &'static str { "https://api.imgur.com/oauth2/authorize" }
     fn token_uri() -> &'static str { "https://api.imgur.com/oauth2/token" }
 }

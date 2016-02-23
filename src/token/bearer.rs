@@ -160,7 +160,7 @@ mod tests {
     use serde_json;
 
     use client::response::{FromResponse, ParseError};
-    use token::{Static, Expiring};
+    use token::{Static, Refresh};
     use super::Bearer;
 
     #[test]
@@ -214,7 +214,7 @@ mod tests {
     }
 
     #[test]
-    fn from_response_expiring() {
+    fn from_response_refresh() {
         let json = Json::from_str(r#"
             {
                 "token_type":"Bearer",
@@ -223,17 +223,17 @@ mod tests {
                 "refresh_token":"bbbbbbbb"
             }
         "#).unwrap();
-        let bearer = Bearer::<Expiring>::from_response(&json).unwrap();
+        let bearer = Bearer::<Refresh>::from_response(&json).unwrap();
         assert_eq!("aaaaaaaa", bearer.access_token);
         assert_eq!(None, bearer.scope);
-        let expiring = bearer.lifetime;
-        assert_eq!("bbbbbbbb", expiring.refresh_token());
-        assert!(expiring.expires() > &UTC::now());
-        assert!(expiring.expires() <= &(UTC::now() + Duration::seconds(3600)));
+        let refresh = bearer.lifetime;
+        assert_eq!("bbbbbbbb", refresh.refresh_token());
+        assert!(refresh.expires() > &UTC::now());
+        assert!(refresh.expires() <= &(UTC::now() + Duration::seconds(3600)));
     }
 
     #[test]
-    fn from_response_inherit_expiring() {
+    fn from_response_inherit_refresh() {
         let json = Json::from_str(r#"
             {
                 "token_type":"Bearer",
@@ -242,7 +242,7 @@ mod tests {
                 "refresh_token":"bbbbbbbb"
             }
         "#).unwrap();
-        let prev = Bearer::<Expiring>::from_response(&json).unwrap();
+        let prev = Bearer::<Refresh>::from_response(&json).unwrap();
 
         let json = Json::from_str(r#"
             {
@@ -251,13 +251,13 @@ mod tests {
                 "expires_in":3600
             }
         "#).unwrap();
-        let bearer = Bearer::<Expiring>::from_response_inherit(&json, &prev).unwrap();
+        let bearer = Bearer::<Refresh>::from_response_inherit(&json, &prev).unwrap();
         assert_eq!("cccccccc", bearer.access_token);
         assert_eq!(None, bearer.scope);
-        let expiring = bearer.lifetime;
-        assert_eq!("bbbbbbbb", expiring.refresh_token());
-        assert!(expiring.expires() > &UTC::now());
-        assert!(expiring.expires() <= &(UTC::now() + Duration::seconds(3600)));
+        let refresh = bearer.lifetime;
+        assert_eq!("bbbbbbbb", refresh.refresh_token());
+        assert!(refresh.expires() > &UTC::now());
+        assert!(refresh.expires() <= &(UTC::now() + Duration::seconds(3600)));
     }
 
     #[test]

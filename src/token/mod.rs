@@ -35,5 +35,5 @@ mod bearer;
 pub use self::statik::Static;
 mod statik;
 
-pub use self::expiring::Expiring;
-mod expiring;
+pub use self::refresh::Refresh;
+mod refresh;
