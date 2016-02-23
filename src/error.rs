@@ -49,7 +49,7 @@ impl<'a> From<&'a str> for OAuth2ErrorCode {
             "unauthorized_client" => OAuth2ErrorCode::UnauthorizedClient,
             "unsupported_grant_type" => OAuth2ErrorCode::UnsupportedGrantType,
             "invalid_scope" => OAuth2ErrorCode::InvalidScope,
-            s => OAuth2ErrorCode::Unrecognized(s.to_string()),
+            s => OAuth2ErrorCode::Unrecognized(s.to_owned()),
         }
     }
 }

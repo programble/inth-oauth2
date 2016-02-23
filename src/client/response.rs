@@ -63,7 +63,7 @@ impl<'a> JsonHelper<'a> {
     /// Returns self as a `JsonObjectHelper` or fails with `ParseError::ExpectedType`.
     pub fn as_object(&self) -> Result<JsonObjectHelper<'a>, ParseError>{
         self.0.as_object()
-            .ok_or(ParseError::ExpectedType("object"))
+            .ok_or_else(|| ParseError::ExpectedType("object"))
             .map(|o| JsonObjectHelper(o))
     }
 }
@@ -80,7 +80,7 @@ impl<'a> JsonObjectHelper<'a> {
 
     /// Gets a field as a string or fails with `ParseError::ExpectedFieldType`.
     pub fn get_string(&self, key: &'static str) -> Result<&'a str, ParseError> {
-        self.get_string_option(key).ok_or(ParseError::ExpectedFieldType(key, "string"))
+        self.get_string_option(key).ok_or_else(|| ParseError::ExpectedFieldType(key, "string"))
     }
 
     /// Gets a field as an i64 or returns `None`.
@@ -90,6 +90,6 @@ impl<'a> JsonObjectHelper<'a> {
 
     /// Gets a field as an i64 or fails with `ParseError::ExpectedFieldType`.
     pub fn get_i64(&self, key: &'static str) -> Result<i64, ParseError> {
-        self.get_i64_option(key).ok_or(ParseError::ExpectedFieldType(key, "i64"))
+        self.get_i64_option(key).ok_or_else(|| ParseError::ExpectedFieldType(key, "i64"))
     }
 }
