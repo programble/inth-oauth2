@@ -25,13 +25,13 @@ impl FromResponse for Static {
 
 impl Serialize for Static {
     fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.visit_unit_struct("Static")
+        serializer.serialize_unit_struct("Static")
     }
 }
 
 impl Deserialize for Static {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        deserializer.visit_unit_struct("Static", UnitVisitor)
+        deserializer.deserialize_unit_struct("Static", UnitVisitor)
             .and(Ok(Static))
     }
 }

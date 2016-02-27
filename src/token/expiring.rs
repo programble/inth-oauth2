@@ -95,7 +95,7 @@ impl Decodable for Expiring {
 
 impl Serialize for Expiring {
     fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.visit_struct("Expiring", SerVisitor(self, 0))
+        serializer.serialize_struct("Expiring", SerVisitor(self, 0))
     }
 }
 
@@ -104,8 +104,8 @@ impl<'a> ser::MapVisitor for SerVisitor<'a> {
     fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
         self.1 += 1;
         match self.1 {
-            1 => serializer.visit_struct_elt("refresh_token", &self.0.refresh_token).map(Some),
-            2 => serializer.visit_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
+            1 => serializer.serialize_struct_elt("refresh_token", &self.0.refresh_token).map(Some),
+            2 => serializer.serialize_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
             _ => Ok(None),
         }
     }
@@ -116,7 +116,7 @@ impl<'a> ser::MapVisitor for SerVisitor<'a> {
 impl Deserialize for Expiring {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
         static FIELDS: &'static [&'static str] = &["refresh_token", "expires"];
-        deserializer.visit_struct("Expiring", FIELDS, DeVisitor)
+        deserializer.deserialize_struct("Expiring", FIELDS, DeVisitor)
     }
 }
 
@@ -161,7 +161,7 @@ enum Field {
 
 impl Deserialize for Field {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        deserializer.visit(FieldVisitor)
+        deserializer.deserialize(FieldVisitor)
     }
 }
 
@@ -173,7 +173,7 @@ impl de::Visitor for FieldVisitor {
         match value {
             "refresh_token" => Ok(Field::RefreshToken),
             "expires" => Ok(Field::Expires),
-            _ => Err(de::Error::syntax("expected refresh_token or expires")),
+            _ => Err(de::Error::custom("expected refresh_token or expires")),
         }
     }
 }

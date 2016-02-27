@@ -64,7 +64,7 @@ impl<L: Lifetime> FromResponse for Bearer<L> {
 
 impl<L: Lifetime + Serialize> Serialize for Bearer<L> {
     fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.visit_struct("Bearer", SerVisitor(self, 0))
+        serializer.serialize_struct("Bearer", SerVisitor(self, 0))
     }
 }
 
@@ -73,9 +73,9 @@ impl<'a, L: Lifetime + Serialize + 'a> ser::MapVisitor for SerVisitor<'a, L> {
     fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
         self.1 += 1;
         match self.1 {
-            1 => serializer.visit_struct_elt("access_token", &self.0.access_token).map(Some),
-            2 => serializer.visit_struct_elt("scope", &self.0.scope).map(Some),
-            3 => serializer.visit_struct_elt("lifetime", &self.0.lifetime).map(Some),
+            1 => serializer.serialize_struct_elt("access_token", &self.0.access_token).map(Some),
+            2 => serializer.serialize_struct_elt("scope", &self.0.scope).map(Some),
+            3 => serializer.serialize_struct_elt("lifetime", &self.0.lifetime).map(Some),
             _ => Ok(None),
         }
     }
@@ -86,7 +86,7 @@ impl<'a, L: Lifetime + Serialize + 'a> ser::MapVisitor for SerVisitor<'a, L> {
 impl<L: Lifetime + Deserialize> Deserialize for Bearer<L> {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
         static FIELDS: &'static [&'static str] = &["access_token", "scope", "lifetime"];
-        deserializer.visit_struct("Bearer", FIELDS, DeVisitor(PhantomData))
+        deserializer.deserialize_struct("Bearer", FIELDS, DeVisitor(PhantomData))
     }
 }
 
@@ -135,7 +135,7 @@ enum Field {
 
 impl Deserialize for Field {
     fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        deserializer.visit(FieldVisitor)
+        deserializer.deserialize(FieldVisitor)
     }
 }
 
@@ -148,7 +148,7 @@ impl de::Visitor for FieldVisitor {
             "access_token" => Ok(Field::AccessToken),
             "scope" => Ok(Field::Scope),
             "lifetime" => Ok(Field::Lifetime),
-            _ => Err(de::Error::syntax("expected access_token, scope or lifetime")),
+            _ => Err(de::Error::custom("expected access_token, scope or lifetime")),
         }
     }
 }
