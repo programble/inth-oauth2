@@ -14,6 +14,7 @@
 //! Support for the following OAuth 2.0 providers is included:
 //!
 //! - Google
+//!   - Web
 //!   - Installed
 //! - GitHub
 //! - Imgur
