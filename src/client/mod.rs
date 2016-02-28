@@ -8,7 +8,7 @@ use url::{form_urlencoded, Url};
 
 use error::OAuth2Error;
 use provider::Provider;
-use token::{Token, Lifetime, Expiring};
+use token::{Token, Lifetime, Refresh};
 
 use self::response::FromResponse;
 pub mod response;
@@ -38,9 +38,9 @@ impl<P: Provider> Client<P> {
     ///
     /// ```
     /// use inth_oauth2::Client;
-    /// use inth_oauth2::provider::Google;
+    /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Google>::new(
+    /// let client = Client::<Installed>::new(
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
     ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
@@ -63,9 +63,9 @@ impl<P: Provider> Client<P> {
     ///
     /// ```
     /// use inth_oauth2::Client;
-    /// use inth_oauth2::provider::Google;
+    /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Google>::new(
+    /// let client = Client::<Installed>::new(
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
     ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
@@ -157,7 +157,7 @@ impl<P: Provider> Client<P> {
     }
 }
 
-impl<P: Provider> Client<P> where P::Token: Token<Expiring> {
+impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
     /// Refreshes an access token.
     ///
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).

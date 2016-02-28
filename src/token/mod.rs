@@ -37,3 +37,6 @@ mod statik;
 
 pub use self::expiring::Expiring;
 mod expiring;
+
+pub use self::refresh::Refresh;
+mod refresh;
