@@ -11,6 +11,20 @@ fn assert_get_uri_ok(uri: &str) {
 }
 
 #[test]
+fn google_web_auth_uri_ok() {
+    let client = Client::<google::Web>::new(
+        String::from("143225766783-0h4h5ktpvhc7kqp6ohbpd2sssqrap57n.apps.googleusercontent.com"),
+        String::new(),
+        Some(String::from("https://cmcenroe.me/oauth2-paste/")),
+    );
+    let auth_uri = client.auth_uri(
+        Some("https://www.googleapis.com/auth/userinfo.email"),
+        Some("state"),
+    ).unwrap();
+    assert_get_uri_ok(&auth_uri);
+}
+
+#[test]
 fn google_installed_auth_uri_ok() {
     let client = Client::<google::Installed>::new(
         String::from("143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com"),
