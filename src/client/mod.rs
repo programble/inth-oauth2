@@ -76,7 +76,7 @@ impl<P: Provider> Client<P> {
     ///     None
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<String, ClientError>
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
     {
         let mut uri = try!(Url::parse(P::auth_uri()));
 
@@ -96,7 +96,7 @@ impl<P: Provider> Client<P> {
 
         uri.set_query_from_pairs(query_pairs.iter());
 
-        Ok(uri.serialize())
+        Ok(uri)
     }
 
     fn post_token<'a>(
@@ -209,7 +209,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
-            client.auth_uri(None, None).unwrap()
+            client.auth_uri(None, None).unwrap().serialize()
         );
     }
 
@@ -222,7 +222,7 @@ mod tests {
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
-            client.auth_uri(None, None).unwrap()
+            client.auth_uri(None, None).unwrap().serialize()
         );
     }
 
@@ -231,7 +231,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
-            client.auth_uri(Some("baz"), None).unwrap()
+            client.auth_uri(Some("baz"), None).unwrap().serialize()
         );
     }
 
@@ -240,7 +240,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
-            client.auth_uri(None, Some("baz")).unwrap()
+            client.auth_uri(None, Some("baz")).unwrap().serialize()
         );
     }
 }

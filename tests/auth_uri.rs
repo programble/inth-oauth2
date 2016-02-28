@@ -1,10 +1,12 @@
 extern crate hyper;
 extern crate inth_oauth2;
+extern crate url;
 
 use inth_oauth2::Client;
 use inth_oauth2::provider::*;
+use url::Url;
 
-fn assert_get_uri_ok(uri: &str) {
+fn assert_get_uri_ok(uri: Url) {
     let client = hyper::Client::new();
     let response = client.get(uri).send().unwrap();
     assert_eq!(hyper::Ok, response.status);
@@ -21,7 +23,7 @@ fn google_web_auth_uri_ok() {
         Some("https://www.googleapis.com/auth/userinfo.email"),
         Some("state"),
     ).unwrap();
-    assert_get_uri_ok(&auth_uri);
+    assert_get_uri_ok(auth_uri);
 }
 
 #[test]
@@ -35,7 +37,7 @@ fn google_installed_auth_uri_ok() {
         Some("https://www.googleapis.com/auth/userinfo.email"),
         Some("state")
     ).unwrap();
-    assert_get_uri_ok(&auth_uri);
+    assert_get_uri_ok(auth_uri);
 }
 
 #[test]
@@ -46,7 +48,7 @@ fn github_auth_uri_ok() {
         Some(String::from("https://cmcenroe.me/oauth2-paste/"))
     );
     let auth_uri = client.auth_uri(Some("user"), Some("state")).unwrap();
-    assert_get_uri_ok(&auth_uri);
+    assert_get_uri_ok(auth_uri);
 }
 
 #[test]
@@ -57,5 +59,5 @@ fn imgur_auth_uri_ok() {
         Some(String::from("https://cmcenroe.me/oauth2-paste/"))
     );
     let auth_uri = client.auth_uri(None, Some("state")).unwrap();
-    assert_get_uri_ok(&auth_uri);
+    assert_get_uri_ok(auth_uri);
 }
