@@ -1,8 +1,6 @@
 use chrono::{DateTime, UTC, Duration, TimeZone};
 use rustc_serialize::json::Json;
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use serde::{ser, de};
 
 use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
@@ -93,87 +91,96 @@ impl Decodable for Refresh {
     }
 }
 
-impl Serialize for Refresh {
-    fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.serialize_struct("Refresh", SerVisitor(self, 0))
-    }
-}
+#[cfg(feature = "serde")]
+mod serde {
+    use chrono::{UTC, TimeZone};
+    use serde::{Serialize, Serializer, Deserialize, Deserializer};
+    use serde::{ser, de};
 
-struct SerVisitor<'a>(&'a Refresh, u8);
-impl<'a> ser::MapVisitor for SerVisitor<'a> {
-    fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
-        self.1 += 1;
-        match self.1 {
-            1 => serializer.serialize_struct_elt("refresh_token", &self.0.refresh_token).map(Some),
-            2 => serializer.serialize_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
-            _ => Ok(None),
+    use super::Refresh;
+
+    impl Serialize for Refresh {
+        fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
+            serializer.serialize_struct("Refresh", SerVisitor(self, 0))
         }
     }
 
-    fn len(&self) -> Option<usize> { Some(2) }
-}
-
-impl Deserialize for Refresh {
-    fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        static FIELDS: &'static [&'static str] = &["refresh_token", "expires"];
-        deserializer.deserialize_struct("Refresh", FIELDS, DeVisitor)
-    }
-}
-
-struct DeVisitor;
-impl de::Visitor for DeVisitor {
-    type Value = Refresh;
-
-    fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Refresh, V::Error> {
-        let mut refresh_token = None;
-        let mut expires = None;
-
-        loop {
-            match try!(visitor.visit_key()) {
-                Some(Field::RefreshToken) => refresh_token = Some(try!(visitor.visit_value())),
-                Some(Field::Expires) => expires = Some(try!(visitor.visit_value())),
-                None => break,
+    struct SerVisitor<'a>(&'a Refresh, u8);
+    impl<'a> ser::MapVisitor for SerVisitor<'a> {
+        fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
+            self.1 += 1;
+            match self.1 {
+                1 => serializer.serialize_struct_elt("refresh_token", &self.0.refresh_token).map(Some),
+                2 => serializer.serialize_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
+                _ => Ok(None),
             }
         }
 
-        let refresh_token = match refresh_token {
-            Some(s) => s,
-            None => return visitor.missing_field("refresh_token"),
-        };
-        let expires = match expires {
-            Some(i) => UTC.timestamp(i, 0),
-            None => return visitor.missing_field("expires"),
-        };
-
-        try!(visitor.end());
-
-        Ok(Refresh {
-            refresh_token: refresh_token,
-            expires: expires,
-        })
+        fn len(&self) -> Option<usize> { Some(2) }
     }
-}
 
-enum Field {
-    RefreshToken,
-    Expires,
-}
-
-impl Deserialize for Field {
-    fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        deserializer.deserialize(FieldVisitor)
+    impl Deserialize for Refresh {
+        fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
+            static FIELDS: &'static [&'static str] = &["refresh_token", "expires"];
+            deserializer.deserialize_struct("Refresh", FIELDS, DeVisitor)
+        }
     }
-}
 
-struct FieldVisitor;
-impl de::Visitor for FieldVisitor {
-    type Value = Field;
+    struct DeVisitor;
+    impl de::Visitor for DeVisitor {
+        type Value = Refresh;
 
-    fn visit_str<E: de::Error>(&mut self, value: &str) -> Result<Field, E> {
-        match value {
-            "refresh_token" => Ok(Field::RefreshToken),
-            "expires" => Ok(Field::Expires),
-            _ => Err(de::Error::custom("expected refresh_token or expires")),
+        fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Refresh, V::Error> {
+            let mut refresh_token = None;
+            let mut expires = None;
+
+            loop {
+                match try!(visitor.visit_key()) {
+                    Some(Field::RefreshToken) => refresh_token = Some(try!(visitor.visit_value())),
+                    Some(Field::Expires) => expires = Some(try!(visitor.visit_value())),
+                    None => break,
+                }
+            }
+
+            let refresh_token = match refresh_token {
+                Some(s) => s,
+                None => return visitor.missing_field("refresh_token"),
+            };
+            let expires = match expires {
+                Some(i) => UTC.timestamp(i, 0),
+                None => return visitor.missing_field("expires"),
+            };
+
+            try!(visitor.end());
+
+            Ok(Refresh {
+                refresh_token: refresh_token,
+                expires: expires,
+            })
+        }
+    }
+
+    enum Field {
+        RefreshToken,
+        Expires,
+    }
+
+    impl Deserialize for Field {
+        fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
+            deserializer.deserialize(FieldVisitor)
+        }
+    }
+
+    struct FieldVisitor;
+    impl de::Visitor for FieldVisitor {
+        type Value = Field;
+
+        fn visit_str<E: de::Error>(&mut self, value: &str) -> Result<Field, E> {
+            match value {
+                "refresh_token" => Ok(Field::RefreshToken),
+                "expires" => Ok(Field::Expires),
+                _ => Err(de::Error::custom("expected refresh_token or expires")),
+            }
         }
     }
 }
@@ -182,7 +189,6 @@ impl de::Visitor for FieldVisitor {
 mod tests {
     use chrono::{UTC, Duration, Timelike};
     use rustc_serialize::json::{self, Json};
-    use serde_json;
 
     use client::response::FromResponse;
     use super::Refresh;
@@ -220,8 +226,11 @@ mod tests {
         assert_eq!(refresh, decoded);
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn serialize_deserialize() {
+        use serde_json;
+
         let original = Refresh {
             refresh_token: String::from("foo"),
             expires: UTC::now().with_nanosecond(0).unwrap(),

@@ -1,8 +1,6 @@
 use chrono::{DateTime, UTC, Duration, TimeZone};
 use rustc_serialize::json::Json;
 use rustc_serialize::{Encodable, Encoder, Decodable, Decoder};
-use serde::{Serialize, Serializer, Deserialize, Deserializer};
-use serde::{ser, de};
 
 use super::Lifetime;
 use client::response::{FromResponse, ParseError, JsonHelper};
@@ -71,77 +69,86 @@ impl Decodable for Expiring {
     }
 }
 
-impl Serialize for Expiring {
-    fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-        serializer.serialize_struct("Expiring", SerVisitor(self, 0))
-    }
-}
+#[cfg(feature = "serde")]
+mod serde {
+    use chrono::{UTC, TimeZone};
+    use serde::{Serialize, Serializer, Deserialize, Deserializer};
+    use serde::{ser, de};
 
-struct SerVisitor<'a>(&'a Expiring, u8);
-impl<'a> ser::MapVisitor for SerVisitor<'a> {
-    fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
-        self.1 += 1;
-        match self.1 {
-            1 => serializer.serialize_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
-            _ => Ok(None),
+    use super::Expiring;
+
+    impl Serialize for Expiring {
+        fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
+            serializer.serialize_struct("Expiring", SerVisitor(self, 0))
         }
     }
 
-    fn len(&self) -> Option<usize> { Some(1) }
-}
-
-impl Deserialize for Expiring {
-    fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        static FIELDS: &'static [&'static str] = &["expires"];
-        deserializer.deserialize_struct("Expiring", FIELDS, DeVisitor)
-    }
-}
-
-struct DeVisitor;
-impl de::Visitor for DeVisitor {
-    type Value = Expiring;
-
-    fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Expiring, V::Error> {
-        let mut expires = None;
-
-        loop {
-            match try!(visitor.visit_key()) {
-                Some(Field::Expires) => expires = Some(try!(visitor.visit_value())),
-                None => break,
+    struct SerVisitor<'a>(&'a Expiring, u8);
+    impl<'a> ser::MapVisitor for SerVisitor<'a> {
+        fn visit<S: Serializer>(&mut self, serializer: &mut S) -> Result<Option<()>, S::Error> {
+            self.1 += 1;
+            match self.1 {
+                1 => serializer.serialize_struct_elt("expires", &self.0.expires.timestamp()).map(Some),
+                _ => Ok(None),
             }
         }
 
-        let expires = match expires {
-            Some(i) => UTC.timestamp(i, 0),
-            None => return visitor.missing_field("expires"),
-        };
-
-        try!(visitor.end());
-
-        Ok(Expiring {
-            expires: expires,
-        })
+        fn len(&self) -> Option<usize> { Some(1) }
     }
-}
 
-enum Field {
-    Expires,
-}
-
-impl Deserialize for Field {
-    fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-        deserializer.deserialize(FieldVisitor)
+    impl Deserialize for Expiring {
+        fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
+            static FIELDS: &'static [&'static str] = &["expires"];
+            deserializer.deserialize_struct("Expiring", FIELDS, DeVisitor)
+        }
     }
-}
 
-struct FieldVisitor;
-impl de::Visitor for FieldVisitor {
-    type Value = Field;
+    struct DeVisitor;
+    impl de::Visitor for DeVisitor {
+        type Value = Expiring;
 
-    fn visit_str<E: de::Error>(&mut self, value: &str) -> Result<Field, E> {
-        match value {
-            "expires" => Ok(Field::Expires),
-            _ => Err(de::Error::custom("expected expires")),
+        fn visit_map<V: de::MapVisitor>(&mut self, mut visitor: V) -> Result<Expiring, V::Error> {
+            let mut expires = None;
+
+            loop {
+                match try!(visitor.visit_key()) {
+                    Some(Field::Expires) => expires = Some(try!(visitor.visit_value())),
+                    None => break,
+                }
+            }
+
+            let expires = match expires {
+                Some(i) => UTC.timestamp(i, 0),
+                None => return visitor.missing_field("expires"),
+            };
+
+            try!(visitor.end());
+
+            Ok(Expiring {
+                expires: expires,
+            })
+        }
+    }
+
+    enum Field {
+        Expires,
+    }
+
+    impl Deserialize for Field {
+        fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
+            deserializer.deserialize(FieldVisitor)
+        }
+    }
+
+    struct FieldVisitor;
+    impl de::Visitor for FieldVisitor {
+        type Value = Field;
+
+        fn visit_str<E: de::Error>(&mut self, value: &str) -> Result<Field, E> {
+            match value {
+                "expires" => Ok(Field::Expires),
+                _ => Err(de::Error::custom("expected expires")),
+            }
         }
     }
 }
@@ -150,7 +157,6 @@ impl de::Visitor for FieldVisitor {
 mod tests {
     use chrono::{UTC, Duration, Timelike};
     use rustc_serialize::json::{self, Json};
-    use serde_json;
 
     use client::response::FromResponse;
     use super::Expiring;
@@ -173,8 +179,11 @@ mod tests {
         assert_eq!(expiring, decoded);
     }
 
+    #[cfg(feature = "serde")]
     #[test]
     fn serialize_deserialize() {
+        use serde_json;
+
         let original = Expiring {
             expires: UTC::now().with_nanosecond(0).unwrap(),
         };
