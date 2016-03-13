@@ -6,6 +6,12 @@ rust:
 os:
   - linux
   - osx
+env:
+  - FEATURES=""
+  - FEATURES="serde"
+script:
+  - cargo build --verbose --no-default-features --features "$FEATURES"
+  - cargo test --verbose --no-default-features --features "$FEATURES"
 matrix:
   allow_failures:
     - rust: nightly
