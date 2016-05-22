@@ -43,6 +43,21 @@ pub mod google {
     use token::{Bearer, Expiring, Refresh};
     use super::Provider;
 
+    /// Signals the server to return the authorization code by prompting the user to copy and
+    /// paste.
+    ///
+    /// See [Choosing a redirect URI][uri].
+    ///
+    /// [uri]: https://developers.google.com/identity/protocols/OAuth2InstalledApp#choosingredirecturi
+    pub const REDIRECT_URI_OOB: &'static str = "urn:ietf:wg:oauth:2.0:oob";
+
+    /// Signals the server to return the authorization code in the page title.
+    ///
+    /// See [Choosing a redirect URI][uri].
+    ///
+    /// [uri]: https://developers.google.com/identity/protocols/OAuth2InstalledApp#choosingredirecturi
+    pub const REDIRECT_URI_OOB_AUTO: &'static str = "urn:ietf:wg:oauth:2.0:oob:auto";
+
     /// Google OAuth 2.0 provider for web applications.
     ///
     /// See [Using OAuth 2.0 for Web Server
