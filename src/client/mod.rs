@@ -4,7 +4,8 @@ use std::marker::PhantomData;
 
 use hyper::{self, header, mime};
 use rustc_serialize::json::Json;
-use url::{form_urlencoded, Url};
+use url::Url;
+use url::form_urlencoded::Serializer;
 
 use error::OAuth2Error;
 use provider::Provider;
@@ -80,21 +81,22 @@ impl<P: Provider> Client<P> {
     {
         let mut uri = try!(Url::parse(P::auth_uri()));
 
-        let mut query_pairs = vec![
-            ("response_type", "code"),
-            ("client_id", &self.client_id),
-        ];
-        if let Some(ref redirect_uri) = self.redirect_uri {
-            query_pairs.push(("redirect_uri", redirect_uri));
-        }
-        if let Some(scope) = scope {
-            query_pairs.push(("scope", scope));
-        }
-        if let Some(state) = state {
-            query_pairs.push(("state", state));
-        }
+        {
+            let mut query = uri.query_pairs_mut();
 
-        uri.set_query_from_pairs(query_pairs.iter());
+            query.append_pair("response_type", "code");
+            query.append_pair("client_id", &self.client_id);
+
+            if let Some(ref redirect_uri) = self.redirect_uri {
+                query.append_pair("redirect_uri", redirect_uri);
+            }
+            if let Some(scope) = scope {
+                query.append_pair("scope", scope);
+            }
+            if let Some(state) = state {
+                query.append_pair("state", state);
+            }
+        }
 
         Ok(uri)
     }
@@ -102,14 +104,13 @@ impl<P: Provider> Client<P> {
     fn post_token<'a>(
         &'a self,
         http_client: &hyper::Client,
-        mut body_pairs: Vec<(&str, &'a str)>
+        mut body: Serializer<String>
     ) -> Result<Json, ClientError> {
         if P::credentials_in_body() {
-            body_pairs.push(("client_id", &self.client_id));
-            body_pairs.push(("client_secret", &self.client_secret));
+            body.append_pair("client_id", &self.client_id);
+            body.append_pair("client_secret", &self.client_secret);
         }
 
-        let body = form_urlencoded::serialize(body_pairs);
         let auth_header = header::Authorization(
             header::Basic {
                 username: self.client_id.clone(),
@@ -119,6 +120,7 @@ impl<P: Provider> Client<P> {
         let accept_header = header::Accept(vec![
             header::qitem(mime::Mime(mime::TopLevel::Application, mime::SubLevel::Json, vec![])),
         ]);
+        let body = body.finish();
 
         let request = http_client.post(P::token_uri())
             .header(auth_header)
@@ -141,17 +143,20 @@ impl<P: Provider> Client<P> {
     /// Requests an access token using an authorization code.
     ///
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
-    pub fn request_token(&self, http_client: &hyper::Client, code: &str) -> Result<P::Token, ClientError> {
-        let mut body_pairs = vec![
-            ("grant_type", "authorization_code"),
-            ("code", code),
-        ];
+    pub fn request_token(
+        &self,
+        http_client: &hyper::Client,
+        code: &str
+    ) -> Result<P::Token, ClientError> {
+        let mut body = Serializer::new(String::new());
+        body.append_pair("grant_type", "authorization_code");
+        body.append_pair("code", code);
+
         if let Some(ref redirect_uri) = self.redirect_uri {
-            body_pairs.push(("redirect_uri", redirect_uri));
+            body.append_pair("redirect_uri", redirect_uri);
         }
 
-
-        let json = try!(self.post_token(http_client, body_pairs));
+        let json = try!(self.post_token(http_client, body));
         let token = try!(P::Token::from_response(&json));
         Ok(token)
     }
@@ -167,15 +172,15 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
         token: P::Token,
         scope: Option<&str>
     ) -> Result<P::Token, ClientError> {
-        let mut body_pairs = vec![
-            ("grant_type", "refresh_token"),
-            ("refresh_token", token.lifetime().refresh_token()),
-        ];
+        let mut body = Serializer::new(String::new());
+        body.append_pair("grant_type", "refresh_token");
+        body.append_pair("refresh_token", token.lifetime().refresh_token());
+
         if let Some(scope) = scope {
-            body_pairs.push(("scope", scope));
+            body.append_pair("scope", scope);
         }
 
-        let json = try!(self.post_token(http_client, body_pairs));
+        let json = try!(self.post_token(http_client, body));
         let token = try!(P::Token::from_response_inherit(&json, &token));
         Ok(token)
     }
@@ -209,7 +214,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
-            client.auth_uri(None, None).unwrap().serialize()
+            client.auth_uri(None, None).unwrap().as_str()
         );
     }
 
@@ -222,7 +227,7 @@ mod tests {
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
-            client.auth_uri(None, None).unwrap().serialize()
+            client.auth_uri(None, None).unwrap().as_str()
         );
     }
 
@@ -231,7 +236,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
-            client.auth_uri(Some("baz"), None).unwrap().serialize()
+            client.auth_uri(Some("baz"), None).unwrap().as_str()
         );
     }
 
@@ -240,7 +245,7 @@ mod tests {
         let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
-            client.auth_uri(None, Some("baz")).unwrap().serialize()
+            client.auth_uri(None, Some("baz")).unwrap().as_str()
         );
     }
 }
