@@ -115,37 +115,19 @@
 //!
 //! ### Persisting tokens
 //!
-//! All token types implement `Encodable` / `Decodable` from `rustc_serialize` and `Serialize` /
-//! `Deserialize` from `serde` (with the default `serde` feature).
-//!
-//! ```no_run
-//! # extern crate inth_oauth2;
-//! # extern crate rustc_serialize;
-//! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::google::Installed;
-//! use rustc_serialize::json;
-//! # fn main() {
-//! # let http_client = Default::default();
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
-//! # let token = client.request_token(&http_client, "").unwrap();
-//! let json = json::encode(&token).unwrap();
-//! # }
-//! ```
+//! All token types implement `Serialize` and `Deserialize` from `serde`.
 //!
 //! ```no_run
 //! # extern crate inth_oauth2;
 //! extern crate serde_json;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! # #[cfg(feature = "serde")]
 //! # fn main() {
 //! # let http_client = Default::default();
 //! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
 //! # }
-//! # #[cfg(not(feature = "serde"))]
-//! # fn main() { }
 //! ```
 
 #![warn(
@@ -160,21 +142,18 @@
     variant_size_differences
 )]
 
+#[macro_use]
+extern crate serde_derive;
+
 extern crate chrono;
 extern crate hyper;
-extern crate rustc_serialize;
+extern crate serde_json;
 extern crate url;
-
-#[cfg(feature = "serde")]
-extern crate serde;
-
-pub use token::{Token, Lifetime};
-pub use client::{Client, ClientError};
 
 pub mod token;
 pub mod provider;
 pub mod error;
 pub mod client;
 
-#[cfg(all(test, feature = "serde"))]
-extern crate serde_json;
+pub use token::{Token, Lifetime};
+pub use client::{Client, ClientError};

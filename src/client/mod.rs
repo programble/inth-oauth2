@@ -3,7 +3,7 @@
 use std::marker::PhantomData;
 
 use hyper::{self, header, mime};
-use rustc_serialize::json::Json;
+use serde_json::{self, Value};
 use url::Url;
 use url::form_urlencoded::Serializer;
 
@@ -105,7 +105,7 @@ impl<P: Provider> Client<P> {
         &'a self,
         http_client: &hyper::Client,
         mut body: Serializer<String>
-    ) -> Result<Json, ClientError> {
+    ) -> Result<Value, ClientError> {
         if P::credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
@@ -129,7 +129,7 @@ impl<P: Provider> Client<P> {
             .body(&body);
 
         let mut response = try!(request.send());
-        let json = try!(Json::from_reader(&mut response));
+        let json = serde_json::from_reader(&mut response)?;
 
         let error = OAuth2Error::from_response(&json);
 

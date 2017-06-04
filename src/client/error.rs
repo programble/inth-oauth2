@@ -2,7 +2,7 @@ use std::error::Error;
 use std::{fmt, io};
 
 use hyper;
-use rustc_serialize::json;
+use serde_json;
 use url;
 
 use client::response::ParseError;
@@ -18,7 +18,7 @@ pub enum ClientError {
     /// Hyper error.
     Hyper(hyper::Error),
     /// JSON error.
-    Json(json::ParserError),
+    Json(serde_json::Error),
     /// Response parse error.
     Parse(ParseError),
     /// OAuth 2.0 error.
@@ -75,6 +75,6 @@ macro_rules! impl_from {
 impl_from!(ClientError::Io, io::Error);
 impl_from!(ClientError::Url, url::ParseError);
 impl_from!(ClientError::Hyper, hyper::Error);
-impl_from!(ClientError::Json, json::ParserError);
+impl_from!(ClientError::Json, serde_json::Error);
 impl_from!(ClientError::Parse, ParseError);
 impl_from!(ClientError::OAuth2, OAuth2Error);

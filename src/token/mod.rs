@@ -29,14 +29,12 @@ pub trait Lifetime: FromResponse {
     fn expired(&self) -> bool;
 }
 
-pub use self::bearer::Bearer;
 mod bearer;
-
-pub use self::statik::Static;
+mod expiring;
+mod refresh;
 mod statik;
 
+pub use self::bearer::Bearer;
 pub use self::expiring::Expiring;
-mod expiring;
-
 pub use self::refresh::Refresh;
-mod refresh;
+pub use self::statik::Static;
