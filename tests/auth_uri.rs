@@ -1,13 +1,18 @@
 extern crate hyper;
+extern crate hyper_native_tls;
 extern crate inth_oauth2;
 extern crate url;
 
+use hyper::net::HttpsConnector;
+use hyper_native_tls::NativeTlsClient;
 use inth_oauth2::Client;
 use inth_oauth2::provider::*;
 use url::Url;
 
 fn assert_get_uri_ok(uri: Url) {
-    let client = hyper::Client::new();
+    let tls = NativeTlsClient::new().unwrap();
+    let connector = HttpsConnector::new(tls);
+    let client = hyper::Client::with_connector(connector);
     let response = client.get(uri).send().unwrap();
     assert_eq!(hyper::Ok, response.status);
 }

@@ -96,13 +96,16 @@
 //!
 //! ```no_run
 //! # extern crate hyper;
+//! # extern crate hyper_native_tls;
 //! # extern crate inth_oauth2;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! use hyper::header::Authorization;
 //!
 //! # fn main() {
-//! let client = hyper::Client::new();
+//! let tls = hyper_native_tls::NativeTlsClient::new().unwrap();
+//! let connector = hyper::net::HttpsConnector::new(tls);
+//! let client = hyper::Client::with_connector(connector);
 //! # let oauth_client = Client::<Installed>::new(String::new(), String::new(), None);
 //! # let token = oauth_client.request_token(&client, "").unwrap();
 //! let request = client.get("https://example.com/resource")
