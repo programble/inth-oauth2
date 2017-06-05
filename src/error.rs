@@ -71,12 +71,12 @@ pub struct OAuth2Error {
 
 impl fmt::Display for OAuth2Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        try!(write!(f, "{:?}", self.code));
+        write!(f, "{:?}", self.code)?;
         if let Some(ref description) = self.description {
-            try!(write!(f, ": {}", description));
+            write!(f, ": {}", description)?;
         }
         if let Some(ref uri) = self.uri {
-            try!(write!(f, " ({})", uri));
+            write!(f, " ({})", uri)?;
         }
         Ok(())
     }

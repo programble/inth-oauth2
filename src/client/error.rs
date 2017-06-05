@@ -13,14 +13,19 @@ use error::OAuth2Error;
 pub enum ClientError {
     /// IO error.
     Io(io::Error),
+
     /// URL error.
     Url(url::ParseError),
+
     /// Hyper error.
     Hyper(hyper::Error),
+
     /// JSON error.
     Json(serde_json::Error),
+
     /// Response parse error.
     Parse(ParseError),
+
     /// OAuth 2.0 error.
     OAuth2(OAuth2Error),
 }

@@ -8,7 +8,6 @@ keywords = ["authentication", "authorization", "auth", "oauth"]
 authors = ["Curtis McEnroe <programble@gmail.com>"]
 license = "ISC"
 
-documentation = "https://cmcenroe.me/inth-oauth2/inth_oauth2"
 repository = "https://github.com/programble/inth-oauth2"
 readme = "README.md"
 

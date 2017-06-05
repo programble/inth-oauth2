@@ -1,7 +1,7 @@
 use serde_json::Value;
 
-use super::Lifetime;
 use client::response::{FromResponse, ParseError};
+use token::Lifetime;
 
 /// A static, non-expiring token.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

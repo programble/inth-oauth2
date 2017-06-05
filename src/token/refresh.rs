@@ -1,8 +1,8 @@
 use chrono::{DateTime, UTC, Duration};
 use serde_json::Value;
 
-use super::Lifetime;
 use client::response::{FromResponse, ParseError};
+use token::Lifetime;
 
 /// An expiring token which can be refreshed.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

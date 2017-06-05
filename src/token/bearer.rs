@@ -1,8 +1,8 @@
 use hyper::header;
 use serde_json::Value;
 
-use super::{Token, Lifetime};
 use client::response::{FromResponse, ParseError};
+use token::{Token, Lifetime};
 
 /// The bearer token type.
 ///

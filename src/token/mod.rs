@@ -5,6 +5,16 @@
 //!
 //! Expiring and non-expiring tokens are abstracted through the `Lifetime` trait.
 
+mod bearer;
+mod expiring;
+mod refresh;
+mod statik;
+
+pub use self::bearer::Bearer;
+pub use self::expiring::Expiring;
+pub use self::refresh::Refresh;
+pub use self::statik::Static;
+
 use client::response::FromResponse;
 
 /// OAuth 2.0 tokens.
@@ -28,13 +38,3 @@ pub trait Lifetime: FromResponse {
     /// Returns true if the access token is no longer valid.
     fn expired(&self) -> bool;
 }
-
-mod bearer;
-mod expiring;
-mod refresh;
-mod statik;
-
-pub use self::bearer::Bearer;
-pub use self::expiring::Expiring;
-pub use self::refresh::Refresh;
-pub use self::statik::Static;
