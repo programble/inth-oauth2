@@ -8,24 +8,17 @@ keywords = ["authentication", "authorization", "auth", "oauth"]
 authors = ["Curtis McEnroe <programble@gmail.com>"]
 license = "ISC"
 
-documentation = "https://cmcenroe.me/inth-oauth2/inth_oauth2"
 repository = "https://github.com/programble/inth-oauth2"
 readme = "README.md"
 
-[features]
-default = ["serde"]
-
 [dependencies]
-chrono = "0.3"
+chrono = { version = "0.3", features = ["serde"] }
 hyper = "0.10"
-rustc-serialize = "0.3.16"
+serde = "1.0.8"
+serde_derive = "1.0.5"
+serde_json = "1.0.2"
 url = "1.1.0"
-
-[dependencies.serde]
-version = "0.7.0"
-optional = true
 
 [dev-dependencies]
 hyper-native-tls = "0.2"
-serde_json = "0.7.0"
 yup-hyper-mock = "2.0"

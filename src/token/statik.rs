@@ -1,10 +1,10 @@
-use rustc_serialize::json::Json;
+use serde_json::Value;
 
-use super::Lifetime;
-use client::response::{FromResponse, ParseError, JsonHelper};
+use client::response::{FromResponse, ParseError};
+use token::Lifetime;
 
 /// A static, non-expiring token.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, RustcEncodable, RustcDecodable)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Static;
 
 impl Lifetime for Static {
@@ -12,66 +12,32 @@ impl Lifetime for Static {
 }
 
 impl FromResponse for Static {
-    fn from_response(json: &Json) -> Result<Self, ParseError> {
-        let obj = try!(JsonHelper(json).as_object());
-        if obj.0.contains_key("expires_in") {
+    fn from_response(json: &Value) -> Result<Self, ParseError> {
+        let obj = json.as_object().ok_or(ParseError::ExpectedType("object"))?;
+        if obj.contains_key("expires_in") {
             return Err(ParseError::UnexpectedField("expires_in"));
         }
         Ok(Static)
     }
 }
 
-#[cfg(feature = "serde")]
-mod serde {
-    use serde::{Serialize, Serializer, Deserialize, Deserializer};
-    use serde::de::impls::UnitVisitor;
-
-    use super::Static;
-
-    impl Serialize for Static {
-        fn serialize<S: Serializer>(&self, serializer: &mut S) -> Result<(), S::Error> {
-            serializer.serialize_unit_struct("Static")
-        }
-    }
-
-    impl Deserialize for Static {
-        fn deserialize<D: Deserializer>(deserializer: &mut D) -> Result<Self, D::Error> {
-            deserializer.deserialize_unit_struct("Static", UnitVisitor)
-                .and(Ok(Static))
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use rustc_serialize::json::Json;
-
     use client::response::{FromResponse, ParseError};
     use super::Static;
 
     #[test]
     fn from_response() {
-        let json = Json::from_str("{}").unwrap();
+        let json = "{}".parse().unwrap();
         assert_eq!(Static, Static::from_response(&json).unwrap());
     }
 
     #[test]
     fn from_response_with_expires_in() {
-        let json = Json::from_str(r#"{"expires_in":3600}"#).unwrap();
+        let json = r#"{"expires_in":3600}"#.parse().unwrap();
         assert_eq!(
             ParseError::UnexpectedField("expires_in"),
             Static::from_response(&json).unwrap_err()
         );
-    }
-
-    #[cfg(feature = "serde")]
-    #[test]
-    fn serialize_deserialize() {
-        use serde_json;
-
-        let original = Static;
-        let serialized = serde_json::to_value(&original);
-        let deserialized = serde_json::from_value(serialized).unwrap();
-        assert_eq!(original, deserialized);
     }
 }

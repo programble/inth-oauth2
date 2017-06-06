@@ -3,9 +3,9 @@
 use std::error::Error;
 use std::fmt;
 
-use rustc_serialize::json::Json;
+use serde_json::Value;
 
-use client::response::{FromResponse, ParseError, JsonHelper};
+use client::response::{FromResponse, ParseError};
 
 /// OAuth 2.0 error codes.
 ///
@@ -71,12 +71,12 @@ pub struct OAuth2Error {
 
 impl fmt::Display for OAuth2Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-        try!(write!(f, "{:?}", self.code));
+        write!(f, "{:?}", self.code)?;
         if let Some(ref description) = self.description {
-            try!(write!(f, ": {}", description));
+            write!(f, ": {}", description)?;
         }
         if let Some(ref uri) = self.uri {
-            try!(write!(f, " ({})", uri));
+            write!(f, " ({})", uri)?;
         }
         Ok(())
     }
@@ -87,12 +87,14 @@ impl Error for OAuth2Error {
 }
 
 impl FromResponse for OAuth2Error {
-    fn from_response(json: &Json) -> Result<Self, ParseError> {
-        let obj = try!(JsonHelper(json).as_object());
+    fn from_response(json: &Value) -> Result<Self, ParseError> {
+        let obj = json.as_object().ok_or(ParseError::ExpectedType("object"))?;
 
-        let code = try!(obj.get_string("error"));
-        let description = obj.get_string_option("error_description");
-        let uri = obj.get_string_option("error_uri");
+        let code = obj.get("error")
+            .and_then(Value::as_str)
+            .ok_or(ParseError::ExpectedFieldType("error", "string"))?;
+        let description = obj.get("error_description").and_then(Value::as_str);
+        let uri = obj.get("error_uri").and_then(Value::as_str);
 
         Ok(OAuth2Error {
             code: code.into(),
@@ -104,14 +106,12 @@ impl FromResponse for OAuth2Error {
 
 #[cfg(test)]
 mod tests {
-    use rustc_serialize::json::Json;
-
     use client::response::{FromResponse, ParseError};
     use super::{OAuth2Error, OAuth2ErrorCode};
 
     #[test]
     fn from_response_empty() {
-        let json = Json::from_str("{}").unwrap();
+        let json = "{}".parse().unwrap();
         assert_eq!(
             ParseError::ExpectedFieldType("error", "string"),
             OAuth2Error::from_response(&json).unwrap_err()
@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn from_response() {
-        let json = Json::from_str(r#"{"error":"invalid_request"}"#).unwrap();
+        let json = r#"{"error":"invalid_request"}"#.parse().unwrap();
         assert_eq!(
             OAuth2Error {
                 code: OAuth2ErrorCode::InvalidRequest,
@@ -133,7 +133,8 @@ mod tests {
 
     #[test]
     fn from_response_with_description() {
-        let json = Json::from_str(r#"{"error":"invalid_request","error_description":"foo"}"#)
+        let json = r#"{"error":"invalid_request","error_description":"foo"}"#
+            .parse()
             .unwrap();
         assert_eq!(
             OAuth2Error {
@@ -147,9 +148,9 @@ mod tests {
 
     #[test]
     fn from_response_with_uri() {
-        let json = Json::from_str(
-            r#"{"error":"invalid_request","error_uri":"http://example.com"}"#
-        ).unwrap();
+        let json = r#"{"error":"invalid_request","error_uri":"http://example.com"}"#
+            .parse()
+            .unwrap();
         assert_eq!(
             OAuth2Error {
                 code: OAuth2ErrorCode::InvalidRequest,

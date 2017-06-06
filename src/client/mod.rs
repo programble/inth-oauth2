@@ -1,21 +1,21 @@
 //! Client.
 
+mod error;
+
+pub mod response;
+pub use self::error::ClientError;
+
 use std::marker::PhantomData;
 
 use hyper::{self, header, mime};
-use rustc_serialize::json::Json;
+use serde_json::{self, Value};
 use url::Url;
 use url::form_urlencoded::Serializer;
 
+use client::response::FromResponse;
 use error::OAuth2Error;
 use provider::Provider;
 use token::{Token, Lifetime, Refresh};
-
-use self::response::FromResponse;
-pub mod response;
-
-pub use self::error::ClientError;
-mod error;
 
 /// OAuth 2.0 client.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -79,7 +79,7 @@ impl<P: Provider> Client<P> {
     /// ```
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
     {
-        let mut uri = try!(Url::parse(P::auth_uri()));
+        let mut uri = Url::parse(P::auth_uri())?;
 
         {
             let mut query = uri.query_pairs_mut();
@@ -105,7 +105,7 @@ impl<P: Provider> Client<P> {
         &'a self,
         http_client: &hyper::Client,
         mut body: Serializer<String>
-    ) -> Result<Json, ClientError> {
+    ) -> Result<Value, ClientError> {
         if P::credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
@@ -128,8 +128,8 @@ impl<P: Provider> Client<P> {
             .header(header::ContentType::form_url_encoded())
             .body(&body);
 
-        let mut response = try!(request.send());
-        let json = try!(Json::from_reader(&mut response));
+        let mut response = request.send()?;
+        let json = serde_json::from_reader(&mut response)?;
 
         let error = OAuth2Error::from_response(&json);
 
@@ -156,8 +156,8 @@ impl<P: Provider> Client<P> {
             body.append_pair("redirect_uri", redirect_uri);
         }
 
-        let json = try!(self.post_token(http_client, body));
-        let token = try!(P::Token::from_response(&json));
+        let json = self.post_token(http_client, body)?;
+        let token = P::Token::from_response(&json)?;
         Ok(token)
     }
 }
@@ -180,8 +180,8 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
             body.append_pair("scope", scope);
         }
 
-        let json = try!(self.post_token(http_client, body));
-        let token = try!(P::Token::from_response_inherit(&json, &token));
+        let json = self.post_token(http_client, body)?;
+        let token = P::Token::from_response_inherit(&json, &token)?;
         Ok(token)
     }
 

@@ -1,11 +1,19 @@
+extern crate hyper;
+extern crate hyper_native_tls;
 extern crate inth_oauth2;
 
 use std::io;
 
+use hyper_native_tls::NativeTlsClient;
+use hyper::net::HttpsConnector;
 use inth_oauth2::Client;
 use inth_oauth2::provider::Imgur;
 
 fn main() {
+    let tls = NativeTlsClient::new().unwrap();
+    let connector = HttpsConnector::new(tls);
+    let https = hyper::Client::with_connector(connector);
+
     let client = Client::<Imgur>::new(
         String::from("505c8ca804230e0"),
         String::from("c898d8cf28404102752b2119a3a1c6aab49899c8"),
@@ -18,11 +26,9 @@ fn main() {
     let mut code = String::new();
     io::stdin().read_line(&mut code).unwrap();
 
-    let http_client = Default::default();
-
-    let token = client.request_token(&http_client, code.trim()).unwrap();
+    let token = client.request_token(&https, code.trim()).unwrap();
     println!("{:?}", token);
 
-    let token = client.refresh_token(&http_client, token, None).unwrap();
+    let token = client.refresh_token(&https, token, None).unwrap();
     println!("{:?}", token);
 }
