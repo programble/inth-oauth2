@@ -12,7 +12,7 @@ OAuth2 really isn't that hard, you know?
 
 ## [Documentation][docs]
 
-[docs]: https://cmcenroe.me/inth-oauth2/inth_oauth2
+[docs]: https://docs.rs/crate/inth-oauth2
 
 ## License
 
