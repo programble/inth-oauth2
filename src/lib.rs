@@ -54,17 +54,25 @@
 //! ### Requesting an access token
 //!
 //! ```no_run
+//! # extern crate hyper;
+//! # extern crate hyper_native_tls;
+//! # extern crate inth_oauth2;
 //! use std::io;
 //! use inth_oauth2::{Client, Token};
 //! # use inth_oauth2::provider::google::Installed;
+//! # fn main() {
 //! # let client = Client::<Installed>::new(String::new(), String::new(), None);
 //!
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
 //!
-//! let http_client = Default::default();
-//! let token = client.request_token(&http_client, code.trim()).unwrap();
+//! let tls = hyper_native_tls::NativeTlsClient::new().unwrap();
+//! let connector = hyper::net::HttpsConnector::new(tls);
+//! let https = hyper::Client::with_connector(connector);
+//!
+//! let token = client.request_token(&https, code.trim()).unwrap();
 //! println!("{}", token.access_token());
+//! # }
 //! ```
 //!
 //! ### Refreshing an access token
@@ -73,9 +81,9 @@
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! # let client = Client::<Installed>::new(String::new(), String::new(), None);
-//! # let http_client = Default::default();
-//! # let token = client.request_token(&http_client, "").unwrap();
-//! let token = client.refresh_token(&http_client, token, None).unwrap();
+//! # let https = Default::default();
+//! # let token = client.request_token(&https, "").unwrap();
+//! let token = client.refresh_token(&https, token, None).unwrap();
 //! ```
 //!
 //! ### Ensuring an access token is still valid
@@ -84,10 +92,10 @@
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! # let client = Client::<Installed>::new(String::new(), String::new(), None);
-//! # let http_client = Default::default();
-//! # let mut token = client.request_token(&http_client, "").unwrap();
+//! # let https = Default::default();
+//! # let mut token = client.request_token(&https, "").unwrap();
 //! // Refresh token only if it has expired.
-//! token = client.ensure_token(&http_client, token).unwrap();
+//! token = client.ensure_token(&https, token).unwrap();
 //! ```
 //!
 //! ### Using bearer access tokens
@@ -96,19 +104,16 @@
 //!
 //! ```no_run
 //! # extern crate hyper;
-//! # extern crate hyper_native_tls;
 //! # extern crate inth_oauth2;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! use hyper::header::Authorization;
 //!
 //! # fn main() {
-//! let tls = hyper_native_tls::NativeTlsClient::new().unwrap();
-//! let connector = hyper::net::HttpsConnector::new(tls);
-//! let client = hyper::Client::with_connector(connector);
 //! # let oauth_client = Client::<Installed>::new(String::new(), String::new(), None);
-//! # let token = oauth_client.request_token(&client, "").unwrap();
-//! let request = client.get("https://example.com/resource")
+//! # let https = Default::default();
+//! # let token = oauth_client.request_token(&https, "").unwrap();
+//! let request = https.get("https://example.com/resource")
 //!     .header(Into::<Authorization<_>>::into(&token));
 //! # }
 //! ```
