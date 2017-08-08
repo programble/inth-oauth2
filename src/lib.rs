@@ -146,12 +146,15 @@
     unused_qualifications,
     variant_size_differences
 )]
+#![feature(conservative_impl_trait)]
 
 #[macro_use]
 extern crate serde_derive;
 
 extern crate chrono;
+extern crate futures;
 extern crate hyper;
+extern crate hyper_rustls;
 extern crate serde_json;
 extern crate url;
 

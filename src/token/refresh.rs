@@ -1,4 +1,5 @@
-use chrono::{DateTime, UTC, Duration};
+use chrono::{DateTime, Duration};
+use chrono::offset::Utc;
 use serde_json::Value;
 
 use client::response::{FromResponse, ParseError};
@@ -8,7 +9,7 @@ use token::Lifetime;
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Refresh {
     refresh_token: String,
-    expires: DateTime<UTC>,
+    expires: DateTime<Utc>,
 }
 
 impl Refresh {
@@ -18,11 +19,11 @@ impl Refresh {
     pub fn refresh_token(&self) -> &str { &self.refresh_token }
 
     /// Returns the expiry time of the access token.
-    pub fn expires(&self) -> &DateTime<UTC> { &self.expires }
+    pub fn expires(&self) -> &DateTime<Utc> { &self.expires }
 }
 
 impl Lifetime for Refresh {
-    fn expired(&self) -> bool { self.expires < UTC::now() }
+    fn expired(&self) -> bool { self.expires < Utc::now() }
 }
 
 impl FromResponse for Refresh {
@@ -38,7 +39,7 @@ impl FromResponse for Refresh {
 
         Ok(Refresh {
             refresh_token: refresh_token.into(),
-            expires: UTC::now() + Duration::seconds(expires_in),
+            expires: Utc::now() + Duration::seconds(expires_in),
         })
     }
 
@@ -56,14 +57,14 @@ impl FromResponse for Refresh {
 
         Ok(Refresh {
             refresh_token: refresh_token.into(),
-            expires: UTC::now() + Duration::seconds(expires_in),
+            expires: Utc::now() + Duration::seconds(expires_in),
         })
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use chrono::{UTC, Duration};
+    use chrono::{Utc, Duration};
 
     use client::response::FromResponse;
     use super::Refresh;
@@ -73,8 +74,8 @@ mod tests {
         let json = r#"{"refresh_token":"aaaaaaaa","expires_in":3600}"#.parse().unwrap();
         let refresh = Refresh::from_response(&json).unwrap();
         assert_eq!("aaaaaaaa", refresh.refresh_token);
-        assert!(refresh.expires > UTC::now());
-        assert!(refresh.expires <= UTC::now() + Duration::seconds(3600));
+        assert!(refresh.expires > Utc::now());
+        assert!(refresh.expires <= Utc::now() + Duration::seconds(3600));
     }
 
     #[test]
@@ -82,11 +83,11 @@ mod tests {
         let json = r#"{"expires_in":3600}"#.parse().unwrap();
         let prev = Refresh {
             refresh_token: String::from("aaaaaaaa"),
-            expires: UTC::now(),
+            expires: Utc::now(),
         };
         let refresh = Refresh::from_response_inherit(&json, &prev).unwrap();
         assert_eq!("aaaaaaaa", refresh.refresh_token);
-        assert!(refresh.expires > UTC::now());
-        assert!(refresh.expires <= UTC::now() + Duration::seconds(3600));
+        assert!(refresh.expires > Utc::now());
+        assert!(refresh.expires <= Utc::now() + Duration::seconds(3600));
     }
 }
