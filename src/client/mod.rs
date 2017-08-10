@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 
 use futures::future::{Future, IntoFuture};
 use futures::Stream;
-use hyper::{self, header, mime, Request };
+use hyper::{self, header, mime, Request};
 use hyper_rustls::HttpsConnector;
 use serde_json::{self, Value};
 use url::Url;
@@ -80,8 +80,7 @@ impl<P: Provider> Client<P> {
     ///     None
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
-    {
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError> {
         // TODO uris should be uris and not need parsing eventually
         let mut uri = Url::parse(P::auth_uri())?;
         {
@@ -106,8 +105,8 @@ impl<P: Provider> Client<P> {
     fn post_token(
         &self,
         http_client: &hyper::Client<HttpsConnector>,
-        mut body: Serializer<String>
-    ) -> impl Future<Item=Value, Error=ClientError> {
+        mut body: Serializer<String>,
+    ) -> impl Future<Item = Value, Error = ClientError> {
         if P::credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
@@ -116,23 +115,34 @@ impl<P: Provider> Client<P> {
         // TODO We should be packing the auth / token uris into uris from the start
         let mut request = Request::new(hyper::Method::Post, P::token_uri().parse().unwrap());
 
-        request.headers_mut().set(header::Authorization(
-            header::Basic {
+        request.headers_mut().set(
+            header::Authorization(header::Basic {
                 username: self.client_id.clone(),
                 password: Some(self.client_secret.clone()),
-            }));
-        request.headers_mut().set(header::Accept(vec![ header::qitem(mime::APPLICATION_JSON), ]));
-        request.headers_mut().set(header::ContentType::form_url_encoded());
+            }),
+        );
+        request.headers_mut().set(header::Accept(vec![
+            header::qitem(
+                mime::APPLICATION_JSON
+            ),
+        ]));
+        request.headers_mut().set(
+            header::ContentType::form_url_encoded(),
+        );
 
         request.set_body(body.finish());
 
-        http_client.request(request).map_err(|e| ClientError::from(e))
-            .and_then(|res| { res.body().concat2()
+        http_client
+            .request(request)
             .map_err(|e| ClientError::from(e))
-                .and_then(move |body| { serde_json::from_slice(&body)
-                .map_err(|e| ClientError::from(e))
+            .and_then(|res| {
+                res.body()
+                    .concat2()
+                    .map_err(|e| ClientError::from(e))
+                    .and_then(move |body| {
+                        serde_json::from_slice(&body).map_err(|e| ClientError::from(e))
+                    })
             })
-        })
     }
 
     /// Requests an access token using an authorization code.
@@ -141,8 +151,8 @@ impl<P: Provider> Client<P> {
     pub fn request_token(
         &self,
         http_client: &hyper::Client<HttpsConnector>,
-        code: &str
-    ) -> impl Future<Item=P::Token, Error=ClientError> {
+        code: &str,
+    ) -> impl Future<Item = P::Token, Error = ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "authorization_code");
         body.append_pair("code", code);
@@ -157,7 +167,10 @@ impl<P: Provider> Client<P> {
     }
 }
 
-impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
+impl<P: Provider> Client<P>
+where
+    P::Token: Token<Refresh>,
+{
     /// Refreshes an access token.
     ///
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
@@ -165,8 +178,8 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
         &self,
         http_client: &hyper::Client<HttpsConnector>,
         token: P::Token,
-        scope: Option<&str>
-    ) -> impl Future<Item=P::Token, Error=ClientError> {
+        scope: Option<&str>,
+    ) -> impl Future<Item = P::Token, Error = ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "refresh_token");
         body.append_pair("refresh_token", token.lifetime().refresh_token());
@@ -181,8 +194,14 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
     }
 
     /// Ensures an access token is valid by refreshing it if necessary.
-    pub fn ensure_token(&self, http_client: &hyper::Client<HttpsConnector>, token: P::Token) 
-    -> Box<Future<Item=P::Token, Error=ClientError>> where P: 'static {
+    pub fn ensure_token(
+        &self,
+        http_client: &hyper::Client<HttpsConnector>,
+        token: P::Token,
+    ) -> Box<Future<Item = P::Token, Error = ClientError>>
+    where
+        P: 'static,
+    {
         if token.lifetime().expired() {
             Box::new(self.refresh_token(http_client, token, None))
         } else {
@@ -201,8 +220,12 @@ mod tests {
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri() -> &'static str { "http://example.com/oauth2/auth" }
-        fn token_uri() -> &'static str { "http://example.com/oauth2/token" }
+        fn auth_uri() -> &'static str {
+            "http://example.com/oauth2/auth"
+        }
+        fn token_uri() -> &'static str {
+            "http://example.com/oauth2/token"
+        }
     }
 
     #[test]
@@ -219,7 +242,7 @@ mod tests {
         let client = Client::<Test>::new(
             String::from("foo"),
             String::from("bar"),
-            Some(String::from("http://example.com/oauth2/callback"))
+            Some(String::from("http://example.com/oauth2/callback")),
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",

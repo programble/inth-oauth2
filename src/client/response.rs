@@ -39,18 +39,16 @@ pub enum ParseError {
 impl fmt::Display for ParseError {
     fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
         match *self {
-            ParseError::ExpectedType(t) =>
-                write!(f, "Expected response of type {}", t),
-            ParseError::ExpectedFieldType(k, t) =>
-                write!(f, "Expected field {} of type {}", k, t),
-            ParseError::ExpectedFieldValue(k, v) =>
-                write!(f, "Expected field {} to equal {}", k, v),
-            ParseError::UnexpectedField(k) =>
-                write!(f, "Unexpected field {}", k),
+            ParseError::ExpectedType(t) => write!(f, "Expected response of type {}", t),
+            ParseError::ExpectedFieldType(k, t) => write!(f, "Expected field {} of type {}", k, t),
+            ParseError::ExpectedFieldValue(k, v) => write!(f, "Expected field {} to equal {}", k, v),
+            ParseError::UnexpectedField(k) => write!(f, "Unexpected field {}", k),
         }
     }
 }
 
 impl Error for ParseError {
-    fn description(&self) -> &str { "response parse error" }
+    fn description(&self) -> &str {
+        "response parse error"
+    }
 }

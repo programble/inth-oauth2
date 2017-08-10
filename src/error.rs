@@ -83,16 +83,18 @@ impl fmt::Display for OAuth2Error {
 }
 
 impl Error for OAuth2Error {
-    fn description(&self) -> &str { "OAuth 2.0 API error" }
+    fn description(&self) -> &str {
+        "OAuth 2.0 API error"
+    }
 }
 
 impl FromResponse for OAuth2Error {
     fn from_response(json: &Value) -> Result<Self, ParseError> {
         let obj = json.as_object().ok_or(ParseError::ExpectedType("object"))?;
 
-        let code = obj.get("error")
-            .and_then(Value::as_str)
-            .ok_or(ParseError::ExpectedFieldType("error", "string"))?;
+        let code = obj.get("error").and_then(Value::as_str).ok_or(
+            ParseError::ExpectedFieldType("error", "string"),
+        )?;
         let description = obj.get("error_description").and_then(Value::as_str);
         let uri = obj.get("error_uri").and_then(Value::as_str);
 

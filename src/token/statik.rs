@@ -8,7 +8,9 @@ use token::Lifetime;
 pub struct Static;
 
 impl Lifetime for Static {
-    fn expired(&self) -> bool { false }
+    fn expired(&self) -> bool {
+        false
+    }
 }
 
 impl FromResponse for Static {
