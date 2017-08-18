@@ -17,7 +17,7 @@ fn main() {
     let client = Client::<Imgur>::new(
         String::from("505c8ca804230e0"),
         String::from("c898d8cf28404102752b2119a3a1c6aab49899c8"),
-        Some(String::from("https://cmcenroe.me/oauth2-paste/"))
+        Some(String::from("https://cmcenroe.me/oauth2-paste/")),
     );
 
     let auth_uri = client.auth_uri(None, None).unwrap();

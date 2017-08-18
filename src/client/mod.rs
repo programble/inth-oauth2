@@ -5,15 +5,15 @@ mod error;
 pub mod response;
 pub use self::error::ClientError;
 
-use std::marker::PhantomData;
-
-use hyper::{self, header, mime};
+use futures::future::{Future, IntoFuture};
+use futures::Stream;
+use hyper::{self, header, mime, Request};
+use hyper_rustls::HttpsConnector;
 use serde_json::{self, Value};
 use url::Url;
 use url::form_urlencoded::Serializer;
 
 use client::response::FromResponse;
-use error::OAuth2Error;
 use provider::Provider;
 use token::{Token, Lifetime, Refresh};
 
@@ -27,9 +27,10 @@ pub struct Client<P: Provider> {
     pub client_secret: String,
 
     /// Redirect URI.
+    // TODO Make an actual uri
     pub redirect_uri: Option<String>,
 
-    provider: PhantomData<P>,
+    provider: P,
 }
 
 impl<P: Provider> Client<P> {
@@ -52,7 +53,7 @@ impl<P: Provider> Client<P> {
             client_id: client_id,
             client_secret: client_secret,
             redirect_uri: redirect_uri,
-            provider: PhantomData,
+            provider: P::default(),
         }
     }
 
@@ -77,10 +78,8 @@ impl<P: Provider> Client<P> {
     ///     None
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
-    {
-        let mut uri = Url::parse(P::auth_uri())?;
-
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError> {
+        let mut uri = Url::parse(self.provider.auth_uri())?;
         {
             let mut query = uri.query_pairs_mut();
 
@@ -97,47 +96,53 @@ impl<P: Provider> Client<P> {
                 query.append_pair("state", state);
             }
         }
-
         Ok(uri)
     }
 
-    fn post_token<'a>(
-        &'a self,
-        http_client: &hyper::Client,
-        mut body: Serializer<String>
-    ) -> Result<Value, ClientError> {
+    fn post_token(
+        &self,
+        http_client: &hyper::Client<HttpsConnector>,
+        mut body: Serializer<String>,
+    ) -> impl Future<Item = Value, Error = ClientError> {
         if P::credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
         }
 
-        let auth_header = header::Authorization(
-            header::Basic {
+        // TODO We should be packing the auth / token uris into uris from the start
+        let mut request = Request::new(
+            hyper::Method::Post,
+            self.provider.token_uri().parse().unwrap(),
+        );
+
+        request.headers_mut().set(
+            header::Authorization(header::Basic {
                 username: self.client_id.clone(),
                 password: Some(self.client_secret.clone()),
-            }
+            }),
         );
-        let accept_header = header::Accept(vec![
-            header::qitem(mime::Mime(mime::TopLevel::Application, mime::SubLevel::Json, vec![])),
-        ]);
-        let body = body.finish();
+        request.headers_mut().set(header::Accept(vec![
+            header::qitem(
+                mime::APPLICATION_JSON
+            ),
+        ]));
+        request.headers_mut().set(
+            header::ContentType::form_url_encoded(),
+        );
 
-        let request = http_client.post(P::token_uri())
-            .header(auth_header)
-            .header(accept_header)
-            .header(header::ContentType::form_url_encoded())
-            .body(&body);
+        request.set_body(body.finish());
 
-        let mut response = request.send()?;
-        let json = serde_json::from_reader(&mut response)?;
-
-        let error = OAuth2Error::from_response(&json);
-
-        if let Ok(error) = error {
-            Err(ClientError::from(error))
-        } else {
-            Ok(json)
-        }
+        http_client
+            .request(request)
+            .map_err(|e| ClientError::from(e))
+            .and_then(|res| {
+                res.body()
+                    .concat2()
+                    .map_err(|e| ClientError::from(e))
+                    .and_then(move |body| {
+                        serde_json::from_slice(&body).map_err(|e| ClientError::from(e))
+                    })
+            })
     }
 
     /// Requests an access token using an authorization code.
@@ -145,9 +150,9 @@ impl<P: Provider> Client<P> {
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
     pub fn request_token(
         &self,
-        http_client: &hyper::Client,
-        code: &str
-    ) -> Result<P::Token, ClientError> {
+        http_client: &hyper::Client<HttpsConnector>,
+        code: &str,
+    ) -> impl Future<Item = P::Token, Error = ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "authorization_code");
         body.append_pair("code", code);
@@ -156,22 +161,25 @@ impl<P: Provider> Client<P> {
             body.append_pair("redirect_uri", redirect_uri);
         }
 
-        let json = self.post_token(http_client, body)?;
-        let token = P::Token::from_response(&json)?;
-        Ok(token)
+        self.post_token(http_client, body).and_then(move |json| {
+            P::Token::from_response(&json).map_err(|e| ClientError::from(e))
+        })
     }
 }
 
-impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
+impl<P: Provider> Client<P>
+where
+    P::Token: Token<Refresh>,
+{
     /// Refreshes an access token.
     ///
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
     pub fn refresh_token(
         &self,
-        http_client: &hyper::Client,
+        http_client: &hyper::Client<HttpsConnector>,
         token: P::Token,
-        scope: Option<&str>
-    ) -> Result<P::Token, ClientError> {
+        scope: Option<&str>,
+    ) -> impl Future<Item = P::Token, Error = ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "refresh_token");
         body.append_pair("refresh_token", token.lifetime().refresh_token());
@@ -180,17 +188,22 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
             body.append_pair("scope", scope);
         }
 
-        let json = self.post_token(http_client, body)?;
-        let token = P::Token::from_response_inherit(&json, &token)?;
-        Ok(token)
+        self.post_token(http_client, body).and_then(move |json| {
+            P::Token::from_response_inherit(&json, &token).map_err(|e| ClientError::from(e))
+        })
     }
 
     /// Ensures an access token is valid by refreshing it if necessary.
-    pub fn ensure_token(&self, http_client: &hyper::Client, token: P::Token) -> Result<P::Token, ClientError> {
+    pub fn ensure_token(
+        &self,
+        http_client: &hyper::Client<HttpsConnector>,
+        token: P::Token,
+    ) -> Box<Future<Item = P::Token, Error = ClientError>> where P: 'static,
+    {
         if token.lifetime().expired() {
-            self.refresh_token(http_client, token, None)
+            Box::new(self.refresh_token(http_client, token, None))
         } else {
-            Ok(token)
+            Box::new(Ok(token).into_future())
         }
     }
 }
@@ -201,12 +214,17 @@ mod tests {
     use provider::Provider;
     use super::Client;
 
+    #[derive(Default)]
     struct Test;
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri() -> &'static str { "http://example.com/oauth2/auth" }
-        fn token_uri() -> &'static str { "http://example.com/oauth2/token" }
+        fn auth_uri(&self) -> &'static str {
+            "http://example.com/oauth2/auth"
+        }
+        fn token_uri(&self) -> &'static str {
+            "http://example.com/oauth2/token"
+        }
     }
 
     #[test]
@@ -223,7 +241,7 @@ mod tests {
         let client = Client::<Test>::new(
             String::from("foo"),
             String::from("bar"),
-            Some(String::from("http://example.com/oauth2/callback"))
+            Some(String::from("http://example.com/oauth2/callback")),
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
