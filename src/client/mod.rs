@@ -5,8 +5,6 @@ mod error;
 pub mod response;
 pub use self::error::ClientError;
 
-use std::marker::PhantomData;
-
 use hyper::{self, header, mime};
 use serde_json::{self, Value};
 use url::Url;
@@ -29,7 +27,7 @@ pub struct Client<P: Provider> {
     /// Redirect URI.
     pub redirect_uri: Option<String>,
 
-    provider: PhantomData<P>,
+    provider: P,
 }
 
 impl<P: Provider> Client<P> {
@@ -52,7 +50,7 @@ impl<P: Provider> Client<P> {
             client_id: client_id,
             client_secret: client_secret,
             redirect_uri: redirect_uri,
-            provider: PhantomData,
+            provider: P::default(),
         }
     }
 
@@ -79,7 +77,7 @@ impl<P: Provider> Client<P> {
     /// ```
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
     {
-        let mut uri = Url::parse(P::auth_uri())?;
+        let mut uri = Url::parse(self.provider.auth_uri())?;
 
         {
             let mut query = uri.query_pairs_mut();
@@ -122,7 +120,7 @@ impl<P: Provider> Client<P> {
         ]);
         let body = body.finish();
 
-        let request = http_client.post(P::token_uri())
+        let request = http_client.post(self.provider.token_uri())
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
@@ -201,12 +199,13 @@ mod tests {
     use provider::Provider;
     use super::Client;
 
+    #[derive(Default)]
     struct Test;
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri() -> &'static str { "http://example.com/oauth2/auth" }
-        fn token_uri() -> &'static str { "http://example.com/oauth2/token" }
+        fn auth_uri(&self) -> &'static str { "http://example.com/oauth2/auth" }
+        fn token_uri(&self) -> &'static str { "http://example.com/oauth2/token" }
     }
 
     #[test]
