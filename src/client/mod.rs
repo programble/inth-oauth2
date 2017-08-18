@@ -5,8 +5,6 @@ mod error;
 pub mod response;
 pub use self::error::ClientError;
 
-use std::marker::PhantomData;
-
 use futures::future::{Future, IntoFuture};
 use futures::Stream;
 use hyper::{self, header, mime, Request};
@@ -32,7 +30,7 @@ pub struct Client<P: Provider> {
     // TODO Make an actual uri
     pub redirect_uri: Option<String>,
 
-    provider: PhantomData<P>,
+    provider: P,
 }
 
 impl<P: Provider> Client<P> {
@@ -55,7 +53,7 @@ impl<P: Provider> Client<P> {
             client_id: client_id,
             client_secret: client_secret,
             redirect_uri: redirect_uri,
-            provider: PhantomData,
+            provider: P::default(),
         }
     }
 
@@ -81,8 +79,7 @@ impl<P: Provider> Client<P> {
     /// );
     /// ```
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError> {
-        // TODO uris should be uris and not need parsing eventually
-        let mut uri = Url::parse(P::auth_uri())?;
+        let mut uri = Url::parse(self.provider.auth_uri())?;
         {
             let mut query = uri.query_pairs_mut();
 
@@ -113,7 +110,10 @@ impl<P: Provider> Client<P> {
         }
 
         // TODO We should be packing the auth / token uris into uris from the start
-        let mut request = Request::new(hyper::Method::Post, P::token_uri().parse().unwrap());
+        let mut request = Request::new(
+            hyper::Method::Post,
+            self.provider.token_uri().parse().unwrap(),
+        );
 
         request.headers_mut().set(
             header::Authorization(header::Basic {
@@ -198,9 +198,7 @@ where
         &self,
         http_client: &hyper::Client<HttpsConnector>,
         token: P::Token,
-    ) -> Box<Future<Item = P::Token, Error = ClientError>>
-    where
-        P: 'static,
+    ) -> Box<Future<Item = P::Token, Error = ClientError>> where P: 'static,
     {
         if token.lifetime().expired() {
             Box::new(self.refresh_token(http_client, token, None))
@@ -216,14 +214,15 @@ mod tests {
     use provider::Provider;
     use super::Client;
 
+    #[derive(Default)]
     struct Test;
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri() -> &'static str {
+        fn auth_uri(&self) -> &'static str {
             "http://example.com/oauth2/auth"
         }
-        fn token_uri() -> &'static str {
+        fn token_uri(&self) -> &'static str {
             "http://example.com/oauth2/token"
         }
     }

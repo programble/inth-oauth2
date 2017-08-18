@@ -41,7 +41,9 @@ impl fmt::Display for ParseError {
         match *self {
             ParseError::ExpectedType(t) => write!(f, "Expected response of type {}", t),
             ParseError::ExpectedFieldType(k, t) => write!(f, "Expected field {} of type {}", k, t),
-            ParseError::ExpectedFieldValue(k, v) => write!(f, "Expected field {} to equal {}", k, v),
+            ParseError::ExpectedFieldValue(k, v) => {
+                write!(f, "Expected field {} to equal {}", k, v)
+            }
             ParseError::UnexpectedField(k) => write!(f, "Unexpected field {}", k),
         }
     }
