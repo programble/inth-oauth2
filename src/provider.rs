@@ -3,7 +3,7 @@
 use token::{Token, Lifetime, Bearer, Static, Refresh};
 
 /// OAuth 2.0 providers.
-pub trait Provider: Default {
+pub trait Provider {
     /// The lifetime of tokens issued by the provider.
     type Lifetime: Lifetime;
 
