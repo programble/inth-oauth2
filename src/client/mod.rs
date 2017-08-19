@@ -46,11 +46,21 @@ impl<P: Provider> Client<P> {
     /// );
     /// ```
     pub fn new(client_id: String, client_secret: String, redirect_uri: Option<String>) -> Self {
+        Client::with_provider(client_id, client_secret,  P::default(), redirect_uri)
+    }
+
+    /// Creates a client with a given Provider. Use when the provider needs non-default Initialization.
+    pub fn with_provider(
+            client_id: String, 
+            client_secret: String, 
+            provider: P, 
+            redirect_uri: Option<String>
+    ) -> Self {
         Client {
-            client_id: client_id,
-            client_secret: client_secret,
-            redirect_uri: redirect_uri,
-            provider: P::default(),
+            client_id,
+            client_secret,
+            redirect_uri,
+            provider
         }
     }
 
