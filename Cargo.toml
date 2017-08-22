@@ -12,7 +12,7 @@ repository = "https://github.com/programble/inth-oauth2"
 readme = "README.md"
 
 [dependencies]
-chrono = { version = "0.3", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"] }
 hyper = "0.10"
 serde = "1.0.8"
 serde_derive = "1.0.5"
