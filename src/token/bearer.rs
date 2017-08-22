@@ -64,7 +64,7 @@ impl<L: Lifetime> FromResponse for Bearer<L> {
 
 #[cfg(test)]
 mod tests {
-    use chrono::{UTC, Duration};
+    use chrono::{Utc, Duration};
 
     use client::response::{FromResponse, ParseError};
     use token::{Static, Refresh};
@@ -135,8 +135,8 @@ mod tests {
         assert_eq!(None, bearer.scope);
         let refresh = bearer.lifetime;
         assert_eq!("bbbbbbbb", refresh.refresh_token());
-        assert!(refresh.expires() > &UTC::now());
-        assert!(refresh.expires() <= &(UTC::now() + Duration::seconds(3600)));
+        assert!(refresh.expires() > &Utc::now());
+        assert!(refresh.expires() <= &(Utc::now() + Duration::seconds(3600)));
     }
 
     #[test]
@@ -163,7 +163,7 @@ mod tests {
         assert_eq!(None, bearer.scope);
         let refresh = bearer.lifetime;
         assert_eq!("bbbbbbbb", refresh.refresh_token());
-        assert!(refresh.expires() > &UTC::now());
-        assert!(refresh.expires() <= &(UTC::now() + Duration::seconds(3600)));
+        assert!(refresh.expires() > &Utc::now());
+        assert!(refresh.expires() <= &(Utc::now() + Duration::seconds(3600)));
     }
 }

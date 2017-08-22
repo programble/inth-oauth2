@@ -4,7 +4,7 @@ extern crate inth_oauth2;
 #[macro_use]
 extern crate yup_hyper_mock;
 
-use chrono::{UTC, Duration};
+use chrono::{Utc, Duration};
 use inth_oauth2::{Client, ClientError, Token, Lifetime};
 use inth_oauth2::error::OAuth2ErrorCode;
 
@@ -95,8 +95,8 @@ fn request_token_bearer_expiring_success() {
     assert_eq!("aaaaaaaa", token.access_token());
     assert_eq!(Some("example"), token.scope());
     assert_eq!(false, token.lifetime().expired());
-    assert!(token.lifetime().expires() > &UTC::now());
-    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+    assert!(token.lifetime().expires() > &Utc::now());
+    assert!(token.lifetime().expires() <= &(Utc::now() + Duration::seconds(3600)));
 }
 
 #[test]
@@ -107,8 +107,8 @@ fn request_token_bearer_refresh_success() {
     assert_eq!(Some("example"), token.scope());
     assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
     assert_eq!(false, token.lifetime().expired());
-    assert!(token.lifetime().expires() > &UTC::now());
-    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+    assert!(token.lifetime().expires() > &Utc::now());
+    assert!(token.lifetime().expires() <= &(Utc::now() + Duration::seconds(3600)));
 }
 
 #[test]
@@ -120,8 +120,8 @@ fn refresh_token_bearer_full() {
     assert_eq!(Some("example"), token.scope());
     assert_eq!("dddddddd", token.lifetime().refresh_token());
     assert_eq!(false, token.lifetime().expired());
-    assert!(token.lifetime().expires() > &UTC::now());
-    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+    assert!(token.lifetime().expires() > &Utc::now());
+    assert!(token.lifetime().expires() <= &(Utc::now() + Duration::seconds(3600)));
 }
 
 #[test]
@@ -133,8 +133,8 @@ fn refresh_token_bearer_partial() {
     assert_eq!(Some("example"), token.scope());
     assert_eq!("bbbbbbbb", token.lifetime().refresh_token());
     assert_eq!(false, token.lifetime().expired());
-    assert!(token.lifetime().expires() > &UTC::now());
-    assert!(token.lifetime().expires() <= &(UTC::now() + Duration::seconds(3600)));
+    assert!(token.lifetime().expires() > &Utc::now());
+    assert!(token.lifetime().expires() <= &(Utc::now() + Duration::seconds(3600)));
 }
 
 #[test]
