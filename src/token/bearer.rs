@@ -1,4 +1,4 @@
-use hyper::header;
+use reqwest::header;
 use serde_json::Value;
 
 use client::response::{FromResponse, ParseError};
