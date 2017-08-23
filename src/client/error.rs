@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::{fmt, io};
 
-use hyper;
 use serde_json;
 use url;
+use reqwest;
 
 use client::response::ParseError;
 use error::OAuth2Error;
@@ -17,8 +17,8 @@ pub enum ClientError {
     /// URL error.
     Url(url::ParseError),
 
-    /// Hyper error.
-    Hyper(hyper::Error),
+    /// Reqwest error.
+    Reqwest(reqwest::Error),
 
     /// JSON error.
     Json(serde_json::Error),
@@ -35,7 +35,7 @@ impl fmt::Display for ClientError {
         match *self {
             ClientError::Io(ref err) => write!(f, "{}", err),
             ClientError::Url(ref err) => write!(f, "{}", err),
-            ClientError::Hyper(ref err) => write!(f, "{}", err),
+            ClientError::Reqwest(ref err) => write!(f, "{}", err),
             ClientError::Json(ref err) => write!(f, "{}", err),
             ClientError::Parse(ref err) => write!(f, "{}", err),
             ClientError::OAuth2(ref err) => write!(f, "{}", err),
@@ -48,7 +48,7 @@ impl Error for ClientError {
         match *self {
             ClientError::Io(ref err) => err.description(),
             ClientError::Url(ref err) => err.description(),
-            ClientError::Hyper(ref err) => err.description(),
+            ClientError::Reqwest(ref err) => err.description(),
             ClientError::Json(ref err) => err.description(),
             ClientError::Parse(ref err) => err.description(),
             ClientError::OAuth2(ref err) => err.description(),
@@ -59,7 +59,7 @@ impl Error for ClientError {
         match *self {
             ClientError::Io(ref err) => Some(err),
             ClientError::Url(ref err) => Some(err),
-            ClientError::Hyper(ref err) => Some(err),
+            ClientError::Reqwest(ref err) => Some(err),
             ClientError::Json(ref err) => Some(err),
             ClientError::Parse(ref err) => Some(err),
             ClientError::OAuth2(ref err) => Some(err),
@@ -79,7 +79,7 @@ macro_rules! impl_from {
 
 impl_from!(ClientError::Io, io::Error);
 impl_from!(ClientError::Url, url::ParseError);
-impl_from!(ClientError::Hyper, hyper::Error);
+impl_from!(ClientError::Reqwest, reqwest::Error);
 impl_from!(ClientError::Json, serde_json::Error);
 impl_from!(ClientError::Parse, ParseError);
 impl_from!(ClientError::OAuth2, OAuth2Error);
