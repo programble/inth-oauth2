@@ -14,7 +14,8 @@ fn main() {
     let connector = HttpsConnector::new(tls);
     let https = hyper::Client::with_connector(connector);
 
-    let client = Client::<Installed>::new(
+    let client = Client::new(
+        Installed,
         String::from("143225766783-ip2d9qv6sdr37276t77luk6f7bhd6bj5.apps.googleusercontent.com"),
         String::from("3kZ5WomzHFlN2f_XbhkyPd3o"),
         Some(String::from(REDIRECT_URI_OOB)),

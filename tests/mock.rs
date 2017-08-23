@@ -16,24 +16,24 @@ mod provider {
     impl Provider for BearerStatic {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri() -> &'static str { "https://example.com/oauth/auth" }
-        fn token_uri() -> &'static str { "https://example.com/oauth/token" }
+        fn auth_uri(&self) -> &str { "https://example.com/oauth/auth" }
+        fn token_uri(&self) -> &str { "https://example.com/oauth/token" }
     }
 
     pub struct BearerExpiring;
     impl Provider for BearerExpiring {
         type Lifetime = Expiring;
         type Token = Bearer<Expiring>;
-        fn auth_uri() -> &'static str { "https://example.com/oauth/auth" }
-        fn token_uri() -> &'static str { "https://example.com/oauth/token" }
+        fn auth_uri(&self) -> &str { "https://example.com/oauth/auth" }
+        fn token_uri(&self) -> &str { "https://example.com/oauth/token" }
     }
 
     pub struct BearerRefresh;
     impl Provider for BearerRefresh {
         type Lifetime = Refresh;
         type Token = Bearer<Refresh>;
-        fn auth_uri() -> &'static str { "https://example.com/oauth/auth" }
-        fn token_uri() -> &'static str { "https://example.com/oauth/token" }
+        fn auth_uri(&self) -> &str { "https://example.com/oauth/auth" }
+        fn token_uri(&self) -> &str { "https://example.com/oauth/token" }
     }
 }
 
@@ -69,11 +69,12 @@ mod connector {
 }
 
 macro_rules! mock_client {
-    ($p:ty, $c:ty) => {
-        (Client::<$p>::new(
+    ($p:path, $c:ty) => {
+        (Client::new(
+            $p,
             String::from("client_id"),
             String::from("client_secret"),
-            None
+            None,
         ),
         hyper::Client::with_connector(<$c>::default()))
     }

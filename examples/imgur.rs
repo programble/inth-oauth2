@@ -14,7 +14,8 @@ fn main() {
     let connector = HttpsConnector::new(tls);
     let https = hyper::Client::with_connector(connector);
 
-    let client = Client::<Imgur>::new(
+    let client = Client::new(
+        Imgur,
         String::from("505c8ca804230e0"),
         String::from("c898d8cf28404102752b2119a3a1c6aab49899c8"),
         Some(String::from("https://cmcenroe.me/oauth2-paste/"))
