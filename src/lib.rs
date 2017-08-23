@@ -151,9 +151,9 @@
 extern crate serde_derive;
 
 extern crate chrono;
-extern crate hyper;
 extern crate serde_json;
 extern crate url;
+extern crate reqwest;
 
 pub mod token;
 pub mod provider;

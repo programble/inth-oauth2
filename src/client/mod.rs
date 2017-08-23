@@ -7,7 +7,7 @@ pub use self::error::ClientError;
 
 use std::marker::PhantomData;
 
-use hyper::{self, header, mime};
+use reqwest::{self, header, mime};
 use serde_json::{self, Value};
 use url::Url;
 use url::form_urlencoded::Serializer;
@@ -103,7 +103,7 @@ impl<P: Provider> Client<P> {
 
     fn post_token<'a>(
         &'a self,
-        http_client: &hyper::Client,
+        http_client: &reqwest::Client,
         mut body: Serializer<String>
     ) -> Result<Value, ClientError> {
         if P::credentials_in_body() {
@@ -118,17 +118,17 @@ impl<P: Provider> Client<P> {
             }
         );
         let accept_header = header::Accept(vec![
-            header::qitem(mime::Mime(mime::TopLevel::Application, mime::SubLevel::Json, vec![])),
+            header::qitem(mime::APPLICATION_JSON),
         ]);
         let body = body.finish();
 
-        let request = http_client.post(P::token_uri())
+        let mut response = http_client.post(P::token_uri())?
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
-            .body(&body);
+            .body(body)
+            .send()?;
 
-        let mut response = request.send()?;
         let json = serde_json::from_reader(&mut response)?;
 
         let error = OAuth2Error::from_response(&json);
@@ -145,7 +145,7 @@ impl<P: Provider> Client<P> {
     /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
     pub fn request_token(
         &self,
-        http_client: &hyper::Client,
+        http_client: &reqwest::Client,
         code: &str
     ) -> Result<P::Token, ClientError> {
         let mut body = Serializer::new(String::new());
@@ -168,7 +168,7 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
     pub fn refresh_token(
         &self,
-        http_client: &hyper::Client,
+        http_client: &reqwest::Client,
         token: P::Token,
         scope: Option<&str>
     ) -> Result<P::Token, ClientError> {
@@ -186,7 +186,7 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
     }
 
     /// Ensures an access token is valid by refreshing it if necessary.
-    pub fn ensure_token(&self, http_client: &hyper::Client, token: P::Token) -> Result<P::Token, ClientError> {
+    pub fn ensure_token(&self, http_client: &reqwest::Client, token: P::Token) -> Result<P::Token, ClientError> {
         if token.lifetime().expired() {
             self.refresh_token(http_client, token, None)
         } else {
