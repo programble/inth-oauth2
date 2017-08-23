@@ -13,15 +13,11 @@ pub trait Provider {
     /// The authorization endpoint URI.
     ///
     /// See [RFC 6749, section 3.1](http://tools.ietf.org/html/rfc6749#section-3.1).
-    ///
-    /// Note: likely to become an associated constant.
     fn auth_uri(&self) -> &str;
 
     /// The token endpoint URI.
     ///
     /// See [RFC 6749, section 3.2](http://tools.ietf.org/html/rfc6749#section-3.2).
-    ///
-    /// Note: likely to become an associated constant.
     fn token_uri(&self) -> &str;
 
     /// Provider requires credentials via request body.
@@ -30,9 +26,7 @@ pub trait Provider {
     /// as part of the request body.
     ///
     /// See [RFC 6749, section 2.3.1](http://tools.ietf.org/html/rfc6749#section-2.3.1).
-    ///
-    /// Note: likely to become an associated constant.
-    fn credentials_in_body() -> bool { false }
+    fn credentials_in_body(&self) -> bool { false }
 }
 
 /// Google OAuth 2.0 providers.
@@ -62,49 +56,49 @@ pub mod google {
     ///
     /// See [Using OAuth 2.0 for Web Server
     /// Applications](https://developers.google.com/identity/protocols/OAuth2WebServer).
-    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Web;
     impl Provider for Web {
         type Lifetime = Expiring;
         type Token = Bearer<Expiring>;
-        fn auth_uri(&self) -> &'static str { "https://accounts.google.com/o/oauth2/v2/auth" }
-        fn token_uri(&self) -> &'static str { "https://www.googleapis.com/oauth2/v4/token" }
+        fn auth_uri(&self) -> &str { "https://accounts.google.com/o/oauth2/v2/auth" }
+        fn token_uri(&self) -> &str { "https://www.googleapis.com/oauth2/v4/token" }
     }
 
     /// Google OAuth 2.0 provider for installed applications.
     ///
     /// See [Using OAuth 2.0 for Installed
     /// Applications](https://developers.google.com/identity/protocols/OAuth2InstalledApp).
-    #[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
     pub struct Installed;
     impl Provider for Installed {
         type Lifetime = Refresh;
         type Token = Bearer<Refresh>;
-        fn auth_uri(&self) -> &'static str { "https://accounts.google.com/o/oauth2/v2/auth" }
-        fn token_uri(&self) -> &'static str { "https://www.googleapis.com/oauth2/v4/token" }
+        fn auth_uri(&self) -> &str { "https://accounts.google.com/o/oauth2/v2/auth" }
+        fn token_uri(&self) -> &str { "https://www.googleapis.com/oauth2/v4/token" }
     }
 }
 
 /// GitHub OAuth 2.0 provider.
 ///
 /// See [OAuth, GitHub Developer Guide](https://developer.github.com/v3/oauth/).
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct GitHub;
 impl Provider for GitHub {
     type Lifetime = Static;
     type Token = Bearer<Static>;
-    fn auth_uri(&self) -> &'static str { "https://github.com/login/oauth/authorize" }
-    fn token_uri(&self) -> &'static str { "https://github.com/login/oauth/access_token" }
+    fn auth_uri(&self) -> &str { "https://github.com/login/oauth/authorize" }
+    fn token_uri(&self) -> &str { "https://github.com/login/oauth/access_token" }
 }
 
 /// Imgur OAuth 2.0 provider.
 ///
 /// See [OAuth 2.0, Imgur](https://api.imgur.com/oauth2).
-#[derive(Default, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Imgur;
 impl Provider for Imgur {
     type Lifetime = Refresh;
     type Token = Bearer<Refresh>;
-    fn auth_uri(&self) -> &'static str { "https://api.imgur.com/oauth2/authorize" }
-    fn token_uri(&self) -> &'static str { "https://api.imgur.com/oauth2/token" }
+    fn auth_uri(&self) -> &str { "https://api.imgur.com/oauth2/authorize" }
+    fn token_uri(&self) -> &str { "https://api.imgur.com/oauth2/token" }
 }

@@ -17,7 +17,10 @@ use token::{Token, Lifetime, Refresh};
 
 /// OAuth 2.0 client.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Client<P: Provider> {
+pub struct Client<P> {
+    /// OAuth provider.
+    pub provider: P,
+
     /// Client ID.
     pub client_id: String,
 
@@ -26,13 +29,10 @@ pub struct Client<P: Provider> {
 
     /// Redirect URI.
     pub redirect_uri: Option<String>,
-
-    /// The provider.
-    pub provider: P,
 }
 
-impl<P: Provider + Default> Client<P> {
-     /// Creates a client.
+impl<P: Provider> Client<P> {
+    /// Creates a client.
     ///
     /// # Examples
     ///
@@ -40,30 +40,24 @@ impl<P: Provider + Default> Client<P> {
     /// use inth_oauth2::Client;
     /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Installed>::new(
+    /// let client = Client::new(
+    ///     Installed,
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
-    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
+    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob")),
     /// );
     /// ```
-    pub fn new(client_id: String, client_secret: String, redirect_uri: Option<String>) -> Self {
-        Client::with_provider(client_id, client_secret,  P::default(), redirect_uri)
-    }
-}
-
-impl<P: Provider> Client<P> {
-    /// Creates a client with a given Provider. Use when the provider needs non-default Initialization.
-    pub fn with_provider(
-            client_id: String, 
-            client_secret: String, 
-            provider: P, 
-            redirect_uri: Option<String>
+    pub fn new(
+        provider: P,
+        client_id: String,
+        client_secret: String,
+        redirect_uri: Option<String>,
     ) -> Self {
         Client {
+            provider,
             client_id,
             client_secret,
             redirect_uri,
-            provider
         }
     }
 
@@ -77,15 +71,16 @@ impl<P: Provider> Client<P> {
     /// use inth_oauth2::Client;
     /// use inth_oauth2::provider::google::Installed;
     ///
-    /// let client = Client::<Installed>::new(
+    /// let client = Client::new(
+    ///     Installed,
     ///     String::from("CLIENT_ID"),
     ///     String::from("CLIENT_SECRET"),
-    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob"))
+    ///     Some(String::from("urn:ietf:wg:oauth:2.0:oob")),
     /// );
     ///
     /// let auth_uri = client.auth_uri(
     ///     Some("https://www.googleapis.com/auth/userinfo.email"),
-    ///     None
+    ///     None,
     /// );
     /// ```
     pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
@@ -112,12 +107,12 @@ impl<P: Provider> Client<P> {
         Ok(uri)
     }
 
-    fn post_token<'a>(
-        &'a self,
+    fn post_token(
+        &self,
         http_client: &hyper::Client,
-        mut body: Serializer<String>
+        mut body: Serializer<String>,
     ) -> Result<Value, ClientError> {
-        if P::credentials_in_body() {
+        if self.provider.credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
         }
@@ -157,7 +152,7 @@ impl<P: Provider> Client<P> {
     pub fn request_token(
         &self,
         http_client: &hyper::Client,
-        code: &str
+        code: &str,
     ) -> Result<P::Token, ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "authorization_code");
@@ -173,7 +168,7 @@ impl<P: Provider> Client<P> {
     }
 }
 
-impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
+impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
     /// Refreshes an access token.
     ///
     /// See [RFC 6749, section 6](http://tools.ietf.org/html/rfc6749#section-6).
@@ -181,7 +176,7 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
         &self,
         http_client: &hyper::Client,
         token: P::Token,
-        scope: Option<&str>
+        scope: Option<&str>,
     ) -> Result<P::Token, ClientError> {
         let mut body = Serializer::new(String::new());
         body.append_pair("grant_type", "refresh_token");
@@ -197,7 +192,11 @@ impl<P: Provider> Client<P> where P::Token: Token<Refresh> {
     }
 
     /// Ensures an access token is valid by refreshing it if necessary.
-    pub fn ensure_token(&self, http_client: &hyper::Client, token: P::Token) -> Result<P::Token, ClientError> {
+    pub fn ensure_token(
+        &self,
+        http_client: &hyper::Client,
+        token: P::Token,
+    ) -> Result<P::Token, ClientError> {
         if token.lifetime().expired() {
             self.refresh_token(http_client, token, None)
         } else {
@@ -212,18 +211,17 @@ mod tests {
     use provider::Provider;
     use super::Client;
 
-    #[derive(Default)]
     struct Test;
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri(&self) -> &'static str { "http://example.com/oauth2/auth" }
-        fn token_uri(&self) -> &'static str { "http://example.com/oauth2/token" }
+        fn auth_uri(&self) -> &str { "http://example.com/oauth2/auth" }
+        fn token_uri(&self) -> &str { "http://example.com/oauth2/token" }
     }
 
     #[test]
     fn auth_uri() {
-        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
             client.auth_uri(None, None).unwrap().as_str()
@@ -232,10 +230,11 @@ mod tests {
 
     #[test]
     fn auth_uri_with_redirect_uri() {
-        let client = Client::<Test>::new(
+        let client = Client::new(
+            Test,
             String::from("foo"),
             String::from("bar"),
-            Some(String::from("http://example.com/oauth2/callback"))
+            Some(String::from("http://example.com/oauth2/callback")),
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
@@ -245,7 +244,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_scope() {
-        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
             client.auth_uri(Some("baz"), None).unwrap().as_str()
@@ -254,7 +253,7 @@ mod tests {
 
     #[test]
     fn auth_uri_with_state() {
-        let client = Client::<Test>::new(String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
             client.auth_uri(None, Some("baz")).unwrap().as_str()

@@ -34,10 +34,11 @@
 //! use inth_oauth2::Client;
 //! use inth_oauth2::provider::google::Installed;
 //!
-//! let client = Client::<Installed>::new(
+//! let client = Client::new(
+//!     Installed,
 //!     String::from("client_id"),
 //!     String::from("client_secret"),
-//!     Some(String::from("redirect_uri"))
+//!     Some(String::from("redirect_uri")),
 //! );
 //! ```
 //!
@@ -46,7 +47,7 @@
 //! ```
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let client = Client::new(Installed, String::new(), String::new(), None);
 //! let auth_uri = client.auth_uri(Some("scope"), Some("state")).unwrap();
 //! println!("Authorize the application by clicking on the link: {}", auth_uri);
 //! ```
@@ -61,7 +62,7 @@
 //! use inth_oauth2::{Client, Token};
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let client = Client::new(Installed, String::new(), String::new(), None);
 //!
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
@@ -80,7 +81,7 @@
 //! ```no_run
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let client = Client::new(Installed, String::new(), String::new(), None);
 //! # let https = Default::default();
 //! # let token = client.request_token(&https, "").unwrap();
 //! let token = client.refresh_token(&https, token, None).unwrap();
@@ -91,7 +92,7 @@
 //! ```no_run
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let client = Client::new(Installed, String::new(), String::new(), None);
 //! # let https = Default::default();
 //! # let mut token = client.request_token(&https, "").unwrap();
 //! // Refresh token only if it has expired.
@@ -110,7 +111,7 @@
 //! use hyper::header::Authorization;
 //!
 //! # fn main() {
-//! # let oauth_client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let oauth_client = Client::new(Installed, String::new(), String::new(), None);
 //! # let https = Default::default();
 //! # let token = oauth_client.request_token(&https, "").unwrap();
 //! let request = https.get("https://example.com/resource")
@@ -129,7 +130,7 @@
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
 //! # let http_client = Default::default();
-//! # let client = Client::<Installed>::new(String::new(), String::new(), None);
+//! # let client = Client::new(Installed, String::new(), String::new(), None);
 //! # let token = client.request_token(&http_client, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
 //! # }
@@ -144,7 +145,7 @@
     unused_extern_crates,
     unused_import_braces,
     unused_qualifications,
-    variant_size_differences
+    variant_size_differences,
 )]
 
 #[macro_use]
