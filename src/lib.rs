@@ -55,9 +55,8 @@
 //! ### Requesting an access token
 //!
 //! ```no_run
-//! # extern crate hyper;
-//! # extern crate hyper_native_tls;
 //! # extern crate inth_oauth2;
+//! # extern crate reqwest;
 //! use std::io;
 //! use inth_oauth2::{Client, Token};
 //! # use inth_oauth2::provider::google::Installed;
@@ -67,11 +66,8 @@
 //! let mut code = String::new();
 //! io::stdin().read_line(&mut code).unwrap();
 //!
-//! let tls = hyper_native_tls::NativeTlsClient::new().unwrap();
-//! let connector = hyper::net::HttpsConnector::new(tls);
-//! let https = hyper::Client::with_connector(connector);
-//!
-//! let token = client.request_token(&https, code.trim()).unwrap();
+//! let http = reqwest::Client::new().unwrap();
+//! let token = client.request_token(&http, code.trim()).unwrap();
 //! println!("{}", token.access_token());
 //! # }
 //! ```
@@ -79,24 +75,32 @@
 //! ### Refreshing an access token
 //!
 //! ```no_run
+//! # extern crate inth_oauth2;
+//! # extern crate reqwest;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
+//! # fn main() {
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! # let https = Default::default();
-//! # let token = client.request_token(&https, "").unwrap();
-//! let token = client.refresh_token(&https, token, None).unwrap();
+//! # let http = reqwest::Client::new().unwrap();
+//! # let token = client.request_token(&http, "").unwrap();
+//! let token = client.refresh_token(&http, token, None).unwrap();
+//! # }
 //! ```
 //!
 //! ### Ensuring an access token is still valid
 //!
 //! ```no_run
+//! # extern crate inth_oauth2;
+//! # extern crate reqwest;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
+//! # fn main() {
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! # let https = Default::default();
-//! # let mut token = client.request_token(&https, "").unwrap();
+//! # let http = reqwest::Client::new().unwrap();
+//! # let mut token = client.request_token(&http, "").unwrap();
 //! // Refresh token only if it has expired.
-//! token = client.ensure_token(&https, token).unwrap();
+//! token = client.ensure_token(&http, token).unwrap();
+//! # }
 //! ```
 //!
 //! ### Using bearer access tokens
@@ -104,18 +108,19 @@
 //! Bearer tokens can be converted to Hyper headers.
 //!
 //! ```no_run
-//! # extern crate hyper;
 //! # extern crate inth_oauth2;
+//! # extern crate reqwest;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! use hyper::header::Authorization;
+//! use reqwest::header::Authorization;
 //!
 //! # fn main() {
 //! # let oauth_client = Client::new(Installed, String::new(), String::new(), None);
-//! # let https = Default::default();
-//! # let token = oauth_client.request_token(&https, "").unwrap();
-//! let request = https.get("https://example.com/resource")
-//!     .header(Into::<Authorization<_>>::into(&token));
+//! # let http = reqwest::Client::new().unwrap();
+//! # let token = oauth_client.request_token(&http, "").unwrap();
+//! let request = http.get("https://example.com/resource").unwrap()
+//!     .header(Into::<Authorization<_>>::into(&token))
+//!     .build();
 //! # }
 //! ```
 //!
@@ -125,13 +130,14 @@
 //!
 //! ```no_run
 //! # extern crate inth_oauth2;
+//! # extern crate reqwest;
 //! extern crate serde_json;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! # fn main() {
-//! # let http_client = Default::default();
+//! # let http = reqwest::Client::new().unwrap();
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! # let token = client.request_token(&http_client, "").unwrap();
+//! # let token = client.request_token(&http, "").unwrap();
 //! let json = serde_json::to_string(&token).unwrap();
 //! # }
 //! ```
