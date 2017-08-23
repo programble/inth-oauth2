@@ -1,6 +1,6 @@
 [root]
 name = "inth-oauth2"
-version = "0.12.0"
+version = "0.13.0"
 dependencies = [
  "chrono 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "reqwest 0.7.3 (registry+https://github.com/rust-lang/crates.io-index)",
