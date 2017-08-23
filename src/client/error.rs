@@ -1,9 +1,9 @@
 use std::error::Error;
 use std::{fmt, io};
 
+use reqwest;
 use serde_json;
 use url;
-use reqwest;
 
 use client::response::ParseError;
 use error::OAuth2Error;
