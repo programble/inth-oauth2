@@ -16,7 +16,7 @@ fn main() {
         Some(String::from("https://cmcenroe.me/oauth2-paste/")),
     );
 
-    let auth_uri = client.auth_uri(None, None).unwrap();
+    let auth_uri = client.auth_uri(None, None);
     println!("{}", auth_uri);
 
     let mut code = String::new();

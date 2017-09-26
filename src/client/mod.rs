@@ -83,9 +83,9 @@ impl<P: Provider> Client<P> {
     ///     None,
     /// );
     /// ```
-    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Result<Url, ClientError>
+    pub fn auth_uri(&self, scope: Option<&str>, state: Option<&str>) -> Url
     {
-        let mut uri = Url::parse(self.provider.auth_uri())?;
+        let mut uri = self.provider.auth_uri().clone();
 
         {
             let mut query = uri.query_pairs_mut();
@@ -104,7 +104,7 @@ impl<P: Provider> Client<P> {
             }
         }
 
-        Ok(uri)
+        uri
     }
 
     fn post_token(
@@ -128,7 +128,7 @@ impl<P: Provider> Client<P> {
         ]);
         let body = body.finish();
 
-        let mut response = http_client.post(self.provider.token_uri())?
+        let mut response = http_client.post(self.provider.token_uri().as_str())?
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
@@ -207,56 +207,68 @@ impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
 
 #[cfg(test)]
 mod tests {
+    use url::Url;
     use token::{Bearer, Static};
     use provider::Provider;
     use super::Client;
 
-    struct Test;
+    struct Test {
+        auth_uri: Url,
+        token_uri: Url
+    }
     impl Provider for Test {
         type Lifetime = Static;
         type Token = Bearer<Static>;
-        fn auth_uri(&self) -> &str { "http://example.com/oauth2/auth" }
-        fn token_uri(&self) -> &str { "http://example.com/oauth2/token" }
+        fn auth_uri(&self) -> &Url { &self.auth_uri }
+        fn token_uri(&self) -> &Url { &self.token_uri }
+    }
+    impl Test {
+        fn new() -> Self {
+            Test {
+                auth_uri: Url::parse("http://example.com/oauth2/auth").unwrap(),
+                token_uri: Url::parse("http://example.com/oauth2/token").unwrap()
+            }
+        }
     }
 
     #[test]
     fn auth_uri() {
-        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test::new(), String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo",
-            client.auth_uri(None, None).unwrap().as_str()
+            client.auth_uri(None, None).as_str()
         );
     }
 
     #[test]
     fn auth_uri_with_redirect_uri() {
         let client = Client::new(
-            Test,
+            Test::new(),
             String::from("foo"),
             String::from("bar"),
             Some(String::from("http://example.com/oauth2/callback")),
         );
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&redirect_uri=http%3A%2F%2Fexample.com%2Foauth2%2Fcallback",
-            client.auth_uri(None, None).unwrap().as_str()
+            client.auth_uri(None, None).as_str()
         );
     }
 
     #[test]
     fn auth_uri_with_scope() {
-        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test::new(), String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&scope=baz",
-            client.auth_uri(Some("baz"), None).unwrap().as_str()
+            client.auth_uri(Some("baz"), None).as_str()
         );
     }
 
     #[test]
     fn auth_uri_with_state() {
-        let client = Client::new(Test, String::from("foo"), String::from("bar"), None);
+        let client = Client::new(Test::new(), String::from("foo"), String::from("bar"), None);
         assert_eq!(
             "http://example.com/oauth2/auth?response_type=code&client_id=foo&state=baz",
-            client.auth_uri(None, Some("baz")).unwrap().as_str()
+            client.auth_uri(None, Some("baz")).as_str()
         );
     }
 }

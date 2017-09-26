@@ -22,7 +22,7 @@ fn google_web_auth_uri_ok() {
     let auth_uri = client.auth_uri(
         Some("https://www.googleapis.com/auth/userinfo.email"),
         Some("state"),
-    ).unwrap();
+    );
     assert_get_uri_ok(auth_uri);
 }
 
@@ -37,7 +37,7 @@ fn google_installed_auth_uri_ok() {
     let auth_uri = client.auth_uri(
         Some("https://www.googleapis.com/auth/userinfo.email"),
         Some("state"),
-    ).unwrap();
+    );
     assert_get_uri_ok(auth_uri);
 }
 
@@ -49,7 +49,7 @@ fn github_auth_uri_ok() {
         String::new(),
         Some(String::from("https://cmcenroe.me/oauth2-paste/")),
     );
-    let auth_uri = client.auth_uri(Some("user"), Some("state")).unwrap();
+    let auth_uri = client.auth_uri(Some("user"), Some("state"));
     assert_get_uri_ok(auth_uri);
 }
 
@@ -61,6 +61,6 @@ fn imgur_auth_uri_ok() {
         String::new(),
         Some(String::from("https://cmcenroe.me/oauth2-paste/")),
     );
-    let auth_uri = client.auth_uri(None, Some("state")).unwrap();
+    let auth_uri = client.auth_uri(None, Some("state"));
     assert_get_uri_ok(auth_uri);
 }
