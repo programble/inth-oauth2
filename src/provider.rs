@@ -120,24 +120,24 @@ impl Provider for Imgur {
 
 #[test]
 fn google_urls() {
-    let prov = google::Web {};
+    let prov = google::Web;
     prov.auth_uri();
     prov.token_uri();
-    let prov = google::Installed {};
+    let prov = google::Installed;
     prov.auth_uri();
     prov.token_uri();
 }
 
 #[test]
 fn github_urls() {
-    let prov = GitHub {};
+    let prov = GitHub;
     prov.auth_uri();
     prov.token_uri();
 }
 
 #[test]
 fn imgur_urls() {
-    let prov = Imgur {};
+    let prov = Imgur;
     prov.auth_uri();
     prov.token_uri();
 }
