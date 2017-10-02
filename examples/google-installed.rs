@@ -16,9 +16,7 @@ fn main() {
         Some(String::from(REDIRECT_URI_OOB)),
     );
 
-    let auth_uri = client
-        .auth_uri(Some("https://www.googleapis.com/auth/userinfo.email"), None)
-        .unwrap();
+    let auth_uri = client.auth_uri(Some("https://www.googleapis.com/auth/userinfo.email"), None);
     println!("{}", auth_uri);
 
     let mut code = String::new();

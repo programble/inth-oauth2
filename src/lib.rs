@@ -48,7 +48,7 @@
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
 //! # let client = Client::new(Installed, String::new(), String::new(), None);
-//! let auth_uri = client.auth_uri(Some("scope"), Some("state")).unwrap();
+//! let auth_uri = client.auth_uri(Some("scope"), Some("state"));
 //! println!("Authorize the application by clicking on the link: {}", auth_uri);
 //! ```
 //!
@@ -153,6 +153,9 @@
     unused_qualifications,
     variant_size_differences,
 )]
+
+#[macro_use]
+extern crate lazy_static;
 
 #[macro_use]
 extern crate serde_derive;
