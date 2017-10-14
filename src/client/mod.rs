@@ -128,7 +128,7 @@ impl<P: Provider> Client<P> {
         ]);
         let body = body.finish();
 
-        let mut response = http_client.post(self.provider.token_uri().clone())?
+        let mut response = http_client.post(self.provider.token_uri().clone())
             .header(auth_header)
             .header(accept_header)
             .header(header::ContentType::form_url_encoded())
