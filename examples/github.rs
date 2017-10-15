@@ -7,7 +7,7 @@ use inth_oauth2::Client;
 use inth_oauth2::provider::GitHub;
 
 fn main() {
-    let http_client = reqwest::Client::new().unwrap();
+    let http_client = reqwest::Client::new();
 
     let client = Client::new(
         GitHub,
