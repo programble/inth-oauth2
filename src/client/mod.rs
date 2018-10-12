@@ -5,15 +5,16 @@ mod error;
 pub mod response;
 pub use self::error::ClientError;
 
-use reqwest::{self, header, mime};
+use reqwest;
+use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use serde_json::{self, Value};
-use url::Url;
 use url::form_urlencoded::Serializer;
+use url::Url;
 
 use client::response::FromResponse;
 use error::OAuth2Error;
 use provider::Provider;
-use token::{Token, Lifetime, Refresh};
+use token::{Lifetime, Refresh, Token};
 
 /// OAuth 2.0 client.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -110,28 +111,20 @@ impl<P: Provider> Client<P> {
     fn post_token(
         &self,
         http_client: &reqwest::Client,
-        mut body: Serializer<String>
+        mut body: Serializer<String>,
     ) -> Result<Value, ClientError> {
         if self.provider.credentials_in_body() {
             body.append_pair("client_id", &self.client_id);
             body.append_pair("client_secret", &self.client_secret);
         }
 
-        let auth_header = header::Authorization(
-            header::Basic {
-                username: self.client_id.clone(),
-                password: Some(self.client_secret.clone()),
-            }
-        );
-        let accept_header = header::Accept(vec![
-            header::qitem(mime::APPLICATION_JSON),
-        ]);
         let body = body.finish();
 
-        let mut response = http_client.post(self.provider.token_uri().clone())
-            .header(auth_header)
-            .header(accept_header)
-            .header(header::ContentType::form_url_encoded())
+        let mut response = http_client
+            .post(self.provider.token_uri().clone())
+            .basic_auth(&self.client_id, Some(&self.client_secret))
+            .header(ACCEPT, "application/json")
+            .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
             .body(body)
             .send()?;
 
