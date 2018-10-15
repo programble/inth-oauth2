@@ -6,7 +6,7 @@ pub mod response;
 pub use self::error::ClientError;
 
 use reqwest;
-use reqwest::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
+use reqwest::header::{ACCEPT, CONTENT_TYPE};
 use serde_json::{self, Value};
 use url::form_urlencoded::Serializer;
 use url::Url;

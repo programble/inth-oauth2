@@ -8,7 +8,7 @@ use url::Url;
 
 fn assert_get_uri_ok(uri: Url) {
     let response = reqwest::get(uri).unwrap();
-    assert_eq!(reqwest::StatusCode::Ok, response.status());
+    assert_eq!(reqwest::StatusCode::OK, response.status());
 }
 
 #[test]

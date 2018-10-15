@@ -103,27 +103,6 @@
 //! # }
 //! ```
 //!
-//! ### Using bearer access tokens
-//!
-//! Bearer tokens can be converted to Hyper headers.
-//!
-//! ```no_run
-//! # extern crate inth_oauth2;
-//! # extern crate reqwest;
-//! # use inth_oauth2::Client;
-//! # use inth_oauth2::provider::google::Installed;
-//! use reqwest::header::Authorization;
-//!
-//! # fn main() {
-//! # let oauth_client = Client::new(Installed, String::new(), String::new(), None);
-//! # let http = reqwest::Client::new();
-//! # let token = oauth_client.request_token(&http, "").unwrap();
-//! let request = http.get("https://example.com/resource")
-//!     .header(Into::<Authorization<_>>::into(&token))
-//!     .build();
-//! # }
-//! ```
-//!
 //! ### Persisting tokens
 //!
 //! All token types implement `Serialize` and `Deserialize` from `serde`.
