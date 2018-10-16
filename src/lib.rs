@@ -105,8 +105,6 @@
 //!
 //! ### Using bearer access tokens
 //!
-//! Bearer tokens can be converted to Hyper headers.
-//!
 //! ```no_run
 //! # extern crate inth_oauth2;
 //! # extern crate reqwest;
