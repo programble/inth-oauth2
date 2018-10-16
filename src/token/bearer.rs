@@ -1,4 +1,3 @@
-use reqwest::header;
 use serde_json::Value;
 
 use client::response::{FromResponse, ParseError};
@@ -15,14 +14,14 @@ pub struct Bearer<L: Lifetime> {
 }
 
 impl<L: Lifetime> Token<L> for Bearer<L> {
-    fn access_token(&self) -> &str { &self.access_token }
-    fn scope(&self) -> Option<&str> { self.scope.as_ref().map(|s| &s[..]) }
-    fn lifetime(&self) -> &L { &self.lifetime }
-}
-
-impl<'a, L: Lifetime> Into<header::Authorization<header::Bearer>> for &'a Bearer<L> {
-    fn into(self) -> header::Authorization<header::Bearer> {
-        header::Authorization(header::Bearer { token: self.access_token.clone() })
+    fn access_token(&self) -> &str {
+        &self.access_token
+    }
+    fn scope(&self) -> Option<&str> {
+        self.scope.as_ref().map(|s| &s[..])
+    }
+    fn lifetime(&self) -> &L {
+        &self.lifetime
     }
 }
 

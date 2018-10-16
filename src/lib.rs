@@ -112,14 +112,14 @@
 //! # extern crate reqwest;
 //! # use inth_oauth2::Client;
 //! # use inth_oauth2::provider::google::Installed;
-//! use reqwest::header::Authorization;
+//! use inth_oauth2::Token;
 //!
 //! # fn main() {
 //! # let oauth_client = Client::new(Installed, String::new(), String::new(), None);
 //! # let http = reqwest::Client::new();
 //! # let token = oauth_client.request_token(&http, "").unwrap();
 //! let request = http.get("https://example.com/resource")
-//!     .header(Into::<Authorization<_>>::into(&token))
+//!     .bearer_auth(token.access_token())
 //!     .build();
 //! # }
 //! ```
