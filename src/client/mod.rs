@@ -159,6 +159,34 @@ impl<P: Provider> Client<P> {
         let token = P::Token::from_response(&json)?;
         Ok(token)
     }
+
+    /// Requests an access token using an authorization code.
+    ///
+    /// See [RFC 6749, section 4.1.3](http://tools.ietf.org/html/rfc6749#section-4.1.3).
+    pub fn request_token_with<I, K, V>(
+        &self,
+        http_client: &reqwest::Client,
+        code: &str,
+        pairs: I,
+    ) -> Result<P::Token, ClientError>
+    where
+        I: IntoIterator,
+        I::Item: core::borrow::Borrow<(K, V)>,
+        K: AsRef<str>,
+        V: AsRef<str> {
+        let mut body = Serializer::new(String::new());
+        body.append_pair("grant_type", "authorization_code");
+        body.append_pair("code", code);
+        body.extend_pairs(pairs);
+
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            body.append_pair("redirect_uri", redirect_uri);
+        }
+
+        let json = self.post_token(http_client, body)?;
+        let token = P::Token::from_response(&json)?;
+        Ok(token)
+    }
 }
 
 impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
