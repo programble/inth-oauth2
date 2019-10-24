@@ -159,6 +159,30 @@ impl<P: Provider> Client<P> {
         let token = P::Token::from_response(&json)?;
         Ok(token)
     }
+
+    /// Requests an access token using client credentials.
+    ///
+    /// See [RFC 6749, section 4.4.2](http://tools.ietf.org/html/rfc6749#section-4.4.2).
+    pub fn request_token_with_credentials(
+        &self,
+        http_client: &reqwest::Client,
+        scope: Option<&str>,
+    ) -> Result<P::Token, ClientError> {
+        let mut body = Serializer::new(String::new());
+        body.append_pair("grant_type", "client_credentials");
+
+        if let Some(ref redirect_uri) = self.redirect_uri {
+            body.append_pair("redirect_uri", redirect_uri);
+        }
+
+        if let Some(scope) = scope {
+            body.append_pair("scope", scope);
+        }
+
+        let json = self.post_token(http_client, body)?;
+        let token = P::Token::from_response(&json)?;
+        Ok(token)
+    }
 }
 
 impl<P> Client<P> where P: Provider, P::Token: Token<Refresh> {
